@@ -21,21 +21,33 @@
     <script type="text/javascript" src="engine.js"></script>
 </head>
 
-<body>
+<body onresize="resizeWindow()"
+    style="-moz-user-select: none; -webkit-user-select: none; -ms-user-select:none; user-select:none;-o-user-select:none;"
+    unselectable="on" onselectstart="return false;">
     <canvas id="canvas"></canvas>
 
     <!-- <label for="viewport">
         <input type="checkbox" id="viewport" onclick="game.limit_viewport=this.checked;" checked /> Confine viewport to
         map</label> -->
     <div id="buttons">
-        <button ontouchstart="game.keydown({ keyCode: 37 })" ontouchend="game.keyup({ keyCode: 37 })"
-            onmousedown=" game.keydown({ keyCode: 37 })" onmouseup=" game.keyup({ keyCode: 37 })"> &lt; </button>
-        <button ontouchstart="game.keydown({ keyCode: 39 })" ontouchend="game.keyup({ keyCode: 39 })"
-            onmousedown=" game.keydown({ keyCode: 39 })" onmouseup=" game.keyup({ keyCode: 39 })">></button>
-        <button ontouchstart="game.keydown({ keyCode: 38 })" ontouchend="game.keyup({ keyCode: 38 })"
-            onmousedown=" game.keydown({ keyCode: 38 })" onmouseup=" game.keyup({ keyCode: 38 })">^</button>
+        <button onclick="openFullscreen()" ontouchstart="game.keydown({ keyCode: 37 })"
+            ontouchend="game.keyup({ keyCode: 37 })" onmousedown=" game.keydown({ keyCode: 37 })"
+            onmouseup=" game.keyup({ keyCode: 37 })"> &lt; </button>
+        <button onclick="openFullscreen()" ontouchstart="game.keydown({ keyCode: 39 })"
+            ontouchend="game.keyup({ keyCode: 39 })" onmousedown=" game.keydown({ keyCode: 39 })"
+            onmouseup=" game.keyup({ keyCode: 39 })">></button>
+        <button onclick="openFullscreen()" ontouchstart="game.keydown({ keyCode: 38 })"
+            ontouchend="game.keyup({ keyCode: 38 })" onmousedown=" game.keydown({ keyCode: 38 })"
+            onmouseup=" game.keyup({ keyCode: 38 })">^</button>
     </div>
     <script type="text/javascript">
+        function resizeWindow() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            game.set_viewport(canvas.width, canvas.height);
+            game.load_map(map);
+        }
+
         window.requestAnimFrame =
             window.requestAnimationFrame ||
             window.webkitRequestAnimationFrame ||
@@ -215,6 +227,35 @@
 
             window.requestAnimFrame(Loop);
         };
+        var elem = document.documentElement;
+
+        /* View in fullscreen */
+        function openFullscreen() {
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+                elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+                elem.msRequestFullscreen();
+            }
+        }
+
+        /* Close fullscreen */
+        function closeFullscreen() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+                document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+                document.msExitFullscreen();
+            }
+        }
+
+
 
         /* Start */
 

@@ -3,7 +3,7 @@ var Engine = function () {
     this.alert_errors   = false;
     this.log_info       = true;
     this.tile_size      = 16;
-    this.limit_viewport = false;
+    this.limit_viewport = true;
     this.jump_switch    = 0;
     
     this.viewport = {
