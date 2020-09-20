@@ -31,14 +31,14 @@
         map</label> -->
     <div id="buttons">
         <button onclick="openFullscreen()" ontouchstart="game.keydown({ keyCode: 37 })"
-            ontouchend="game.keyup({ keyCode: 37 })" onmousedown=" game.keydown({ keyCode: 37 })"
-            onmouseup=" game.keyup({ keyCode: 37 })"> &lt; </button>
+            ontouchend="game.keyup({ keyCode: 37 })" ontouchcancel="game.keyup({ keyCode: 37 })"
+            onmousedown=" game.keydown({ keyCode: 37 })" onmouseup=" game.keyup({ keyCode: 37 })"> &lt; </button>
         <button onclick="openFullscreen()" ontouchstart="game.keydown({ keyCode: 39 })"
-            ontouchend="game.keyup({ keyCode: 39 })" onmousedown=" game.keydown({ keyCode: 39 })"
-            onmouseup=" game.keyup({ keyCode: 39 })">></button>
+            ontouchend="game.keyup({ keyCode: 39 })" ontouchcancel="game.keyup({ keyCode: 39 })"
+            onmousedown=" game.keydown({ keyCode: 39 })" onmouseup=" game.keyup({ keyCode: 39 })">></button>
         <button onclick="openFullscreen()" ontouchstart="game.keydown({ keyCode: 38 })"
-            ontouchend="game.keyup({ keyCode: 38 })" onmousedown=" game.keydown({ keyCode: 38 })"
-            onmouseup=" game.keyup({ keyCode: 38 })">^</button>
+            ontouchend="game.keyup({ keyCode: 38 })" ontouchcancel="game.keyup({ keyCode: 38 })"
+            onmousedown=" game.keydown({ keyCode: 38 })" onmouseup=" game.keyup({ keyCode: 38 })">^</button>
     </div>
     <script type="text/javascript">
         function resizeWindow() {
