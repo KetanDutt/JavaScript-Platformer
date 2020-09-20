@@ -2,6 +2,19 @@
 <html>
 
 <head>
+    <meta charset="UTF-8">
+    <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+    <meta name="description" content="Platformer">
+
+    <!-- iOS meta tags & icons -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Platformer">
+    <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="manifest" href="manifest.json">
+
     <title>Platformer</title>
 
     <link rel="stylesheet" type="text/css" href="style.css" />
@@ -19,9 +32,9 @@
         <button ontouchstart="game.keydown({ keyCode: 37 })" ontouchend="game.keyup({ keyCode: 37 })"
             onmousedown=" game.keydown({ keyCode: 37 })" onmouseup=" game.keyup({ keyCode: 37 })"> &lt; </button>
         <button ontouchstart="game.keydown({ keyCode: 39 })" ontouchend="game.keyup({ keyCode: 39 })"
-            onmouseup=" game.keyup({ keyCode: 39 })" onmousedown=" game.keydown({ keyCode: 39 })">></button>
+            onmousedown=" game.keydown({ keyCode: 39 })" onmouseup=" game.keyup({ keyCode: 39 })">></button>
         <button ontouchstart="game.keydown({ keyCode: 38 })" ontouchend="game.keyup({ keyCode: 38 })"
-            onmouseup=" game.keyup({ keyCode: 38 })" onmousedown=" game.keydown({ keyCode: 38 })">^</button>
+            onmousedown=" game.keydown({ keyCode: 38 })" onmouseup=" game.keyup({ keyCode: 38 })">^</button>
     </div>
     <script type="text/javascript">
         window.requestAnimFrame =
@@ -202,13 +215,7 @@
             game.draw(ctx);
 
             window.requestAnimFrame(Loop);
-            // moveRight();
         };
-
-        function moveRight() {
-            game.keydown({ keyCode: 39 });
-            game.keyup({ keyCode: 39 });
-        }
 
         /* Start */
 
