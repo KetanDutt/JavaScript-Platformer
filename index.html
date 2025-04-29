@@ -26,18 +26,28 @@
     unselectable="on" onselectstart="return false;">
     <canvas id="canvas"></canvas>
 
-    <div id="buttons">
-        <button onclick="openFullscreen()" ontouchstart="game.keydown({ keyCode: 37 })"
-            ontouchend="game.keyup({ keyCode: 37 })" ontouchcancel="game.keyup({ keyCode: 37 })"
-            onmousedown=" game.keydown({ keyCode: 37 })" onmouseup=" game.keyup({ keyCode: 37 })"> &lt; </button>
-        <button onclick="openFullscreen()" ontouchstart="game.keydown({ keyCode: 39 })"
-            ontouchend="game.keyup({ keyCode: 39 })" ontouchcancel="game.keyup({ keyCode: 39 })"
-            onmousedown=" game.keydown({ keyCode: 39 })" onmouseup=" game.keyup({ keyCode: 39 })">></button>
-        <button onclick="openFullscreen()" ontouchstart="game.keydown({ keyCode: 38 })"
-            ontouchend="game.keyup({ keyCode: 38 })" ontouchcancel="game.keyup({ keyCode: 38 })"
-            onmousedown=" game.keydown({ keyCode: 38 })" onmouseup=" game.keyup({ keyCode: 38 })">^</button>
+    <div id="controls">
+        <div id="dpad">
+            <div class="dpad-row">
+                <button class="dpad-btn" id="up" ontouchstart="handleMobileInput(true, 38)" ontouchend="handleMobileInput(false, 38)" ontouchcancel="handleMobileInput(false, 38)"
+                onmousedown="handleMobileInput(true, 38)" onmouseup="handleMobileInput(false, 38)">^</button>
+            </div>
+        </div>
+            <div id="dpad">
+            <div class="dpad-row">
+                <button class="dpad-btn" id="left" ontouchstart="handleMobileInput(true, 37)" ontouchend="handleMobileInput(false, 37)" ontouchcancel="handleMobileInput(false, 37)"
+                onmousedown="handleMobileInput(true, 37)" onmouseup="handleMobileInput(false, 37)">&lt;</button>
+                <button class="dpad-btn" id="right" ontouchstart="handleMobileInput(true, 39)" ontouchend="handleMobileInput(false, 39)" ontouchcancel="handleMobileInput(false, 39)"
+                onmousedown="handleMobileInput(true, 39)" onmouseup="handleMobileInput(false, 39)">&gt;</button>
+            </div>
+        </div>
+        <button id="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
     </div>
+    
     <script type="text/javascript">
+        let usingKeyboard = false;
+        let game;
+        
         function resizeWindow() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -61,15 +71,44 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        /* Setup of the engine */
+        function handleMobileInput(isPressed, keyCode) {
+            usingKeyboard = false;
+            if (isPressed) {
+                game.keydown({ keyCode: keyCode });
+            } else {
+                game.keyup({ keyCode: keyCode });
+            }
+        }
 
+        function detectInputMethod(e) {
+            // Check if the event is from a touch or mouse
+            if (e.type === 'keydown' || e.type === 'keyup') {
+                usingKeyboard = true;
+                document.getElementById('controls').style.display = 'none';
+            } else if (e.type === 'touchstart' || e.type === 'mousedown') {
+                usingKeyboard = false;
+                document.getElementById('controls').style.display = 'flex';
+            }
+        }
 
-        /* Limit the viewport to the confines of the map */
+        // Add event listeners for input detection
+        document.addEventListener('keydown', detectInputMethod);
+        document.addEventListener('keyup', detectInputMethod);
+        document.addEventListener('touchstart', detectInputMethod);
+        document.addEventListener('mousedown', detectInputMethod);
 
-        var elem = document.documentElement;
+        /* Toggle fullscreen */
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                openFullscreen();
+            } else {
+                closeFullscreen();
+            }
+        }
 
         /* View in fullscreen */
         function openFullscreen() {
+            const elem = document.documentElement;
             if (elem.requestFullscreen) {
                 elem.requestFullscreen();
             } else if (elem.mozRequestFullScreen) { /* Firefox */
@@ -94,20 +133,16 @@
             }
         }
 
-
-
         /* Start */
         async function gameStart() {
-            var game = new Engine();
+            game = new Engine();
             game.set_viewport(canvas.width, canvas.height);
             map = await fetch('level1.json').then(response => response.json());
             game.load_map(map);
 
-
             game.limit_viewport = true;
 
             var Loop = function () {
-
                 ctx.fillStyle = '#333';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -119,9 +154,9 @@
 
             Loop();
         }
+        
+        // Initialize the game
         gameStart();
-
     </script>
 </body>
-
 </html>
