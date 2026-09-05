@@ -1,0 +1,23 @@
+{
+    "name": "green-hills-platformer",
+    "version": "1.0.0",
+    "description": "A polished, production-ready HTML5 platformer built on a custom dependency-free canvas engine.",
+    "private": true,
+    "scripts": {
+        "start": "node server.js",
+        "build": "node tools/generate-level.js > level1.json",
+        "test": "node tools/smoke-test.js",
+        "serve": "node server.js"
+    },
+    "keywords": [
+        "platformer",
+        "html5",
+        "canvas",
+        "game",
+        "javascript"
+    ],
+    "license": "MIT",
+    "engines": {
+        "node": ">=14"
+    }
+}

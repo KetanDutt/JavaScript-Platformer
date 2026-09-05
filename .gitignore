@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build output (level is generated; commit the generated JSON if you prefer)
+# level1.json
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Env
+.env
+.env.*

@@ -1,162 +1,252 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-    <meta name="description" content="Platformer">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="Green Hills — a polished, production-ready HTML5 platformer.">
+    <meta name="theme-color" content="#0175C2">
 
-    <!-- iOS meta tags & icons -->
+    <!-- iOS PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="Platformer">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Green Hills">
 
-    <title>Platformer</title>
+    <title>Green Hills — Platformer</title>
 
+    <!-- Icons / manifest -->
     <link rel="apple-touch-icon" href="icons/Icon-192.png">
-    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="icon" type="image/png" href="favicon.png">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" type="text/css" href="style.css" />
+
+    <!-- Styles -->
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+    <!-- Engine -->
     <script type="text/javascript" src="engine.js"></script>
 </head>
 
-<body onresize="resizeWindow()"
-    style="-moz-user-select: none; -webkit-user-select: none; -ms-user-select:none; user-select:none;-o-user-select:none;"
-    unselectable="on" onselectstart="return false;">
+<body>
     <canvas id="canvas"></canvas>
 
-    <div id="controls">
-        <div id="dpad">
-            <div class="dpad-row">
-                <button class="dpad-btn" id="up" ontouchstart="handleMobileInput(true, 38)" ontouchend="handleMobileInput(false, 38)" ontouchcancel="handleMobileInput(false, 38)"
-                onmousedown="handleMobileInput(true, 38)" onmouseup="handleMobileInput(false, 38)">^</button>
+    <!-- ============ HUD ============ -->
+    <div id="hud">
+        <div class="hud-group hud-left">
+            <div class="hud-chip">
+                <span class="hud-icon">★</span>
+                <span id="score" class="hud-value">0</span>
+            </div>
+            <div class="hud-chip">
+                <span class="hud-icon">🪙</span>
+                <span id="coins" class="hud-value">0 / 0</span>
+            </div>
+            <div class="hud-chip" title="Lives">
+                <span class="hud-icon">❤️</span>
+                <span id="lives" class="hud-value">3</span>
             </div>
         </div>
-            <div id="dpad">
-            <div class="dpad-row">
-                <button class="dpad-btn" id="left" ontouchstart="handleMobileInput(true, 37)" ontouchend="handleMobileInput(false, 37)" ontouchcancel="handleMobileInput(false, 37)"
-                onmousedown="handleMobileInput(true, 37)" onmouseup="handleMobileInput(false, 37)">&lt;</button>
-                <button class="dpad-btn" id="right" ontouchstart="handleMobileInput(true, 39)" ontouchend="handleMobileInput(false, 39)" ontouchcancel="handleMobileInput(false, 39)"
-                onmousedown="handleMobileInput(true, 39)" onmouseup="handleMobileInput(false, 39)">&gt;</button>
+
+        <div class="hud-group hud-center">
+            <div id="level-name" class="hud-chip hud-level-name">
+                <span id="level-name-text">Green Hills</span>
+            </div>
+            <div class="hud-chip">
+                <span class="hud-icon">⏱</span>
+                <span id="timer" class="hud-value">0:00</span>
+            </div>
+            <div id="best-chip" class="hud-chip hud-best" title="Best score" style="display:none">
+                <span class="hud-icon">🏆</span>
+                <span id="best" class="hud-value">0</span>
             </div>
         </div>
-        <button id="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
+
+        <div class="hud-group hud-right">
+            <button id="fullscreen-btn" class="icon-btn" aria-label="Toggle fullscreen" title="Fullscreen">⛶</button>
+            <button id="mute-btn" class="icon-btn" aria-label="Toggle sound" title="Sound: on">🔊</button>
+            <button id="pause-btn" class="icon-btn" aria-label="Pause" title="Pause">⏸</button>
+            <button id="restart-btn" class="icon-btn" aria-label="Restart" title="Restart">↻</button>
+        </div>
     </div>
-    
+
+    <!-- ============ Mobile controls ============ -->
+    <div id="controls">
+        <div id="dpad-left" class="control-side">
+            <button class="dpad-btn" id="btn-left" aria-label="Move left">◀</button>
+            <button class="dpad-btn" id="btn-right" aria-label="Move right">▶</button>
+        </div>
+        <div id="dpad-right" class="control-side">
+            <button class="dpad-btn jump-btn" id="btn-jump" aria-label="Jump">▲</button>
+        </div>
+    </div>
+
+    <!-- ============ Toasts ============ -->
+    <div id="toast"></div>
+
+    <!-- ============ Start screen ============ -->
+    <div id="start-screen" class="overlay visible">
+        <div class="panel">
+            <h1 class="game-title">Green Hills</h1>
+            <p class="tagline">A polished HTML5 platformer</p>
+            <div class="controls-help">
+                <div class="help-row"><kbd>◀</kbd><kbd>▶</kbd> Move</div>
+                <div class="help-row"><kbd>▲</kbd> / <kbd>Space</kbd> Jump</div>
+                <div class="help-row"><kbd>Esc</kbd> Pause</div>
+                <div class="help-row">Touch controls on mobile 📱</div>
+            </div>
+            <button id="play-btn" class="btn btn-primary">▶&nbsp; Play</button>
+            <p class="hint">Collect coins, stomp enemies, and reach the flag!</p>
+        </div>
+    </div>
+
+    <!-- ============ Pause screen ============ -->
+    <div id="pause-screen" class="overlay hidden">
+        <div class="panel">
+            <h2>Paused</h2>
+            <div class="panel-actions">
+                <button id="resume-btn" class="btn btn-primary">▶ Resume</button>
+                <button id="pause-restart-btn" class="btn">↻ Restart</button>
+                <button id="pause-menu-btn" class="btn">🏠 Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ Win screen ============ -->
+    <div id="win-screen" class="overlay hidden">
+        <div class="panel">
+            <h2 class="win-title">🎉 Level Complete!</h2>
+            <div class="stats-grid">
+                <div class="stat"><span class="stat-label">Score</span><span id="win-score" class="stat-value">0</span></div>
+                <div class="stat"><span class="stat-label">Coins</span><span id="win-coins" class="stat-value">0 / 0</span></div>
+                <div class="stat"><span class="stat-label">Time</span><span id="win-time" class="stat-value">0:00</span></div>
+                <div class="stat"><span class="stat-label">Best</span><span id="win-best" class="stat-value">0</span></div>
+            </div>
+            <div class="panel-actions">
+                <button id="win-play-btn" class="btn btn-primary">↻ Play Again</button>
+                <button id="win-menu-btn" class="btn">🏠 Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ Game over screen ============ -->
+    <div id="gameover-screen" class="overlay hidden">
+        <div class="panel">
+            <h2 class="gameover-title">💀 Game Over</h2>
+            <div class="stats-grid">
+                <div class="stat"><span class="stat-label">Score</span><span id="final-score" class="stat-value">0</span></div>
+                <div class="stat"><span class="stat-label">Coins</span><span id="final-coins" class="stat-value">0 / 0</span></div>
+            </div>
+            <div class="panel-actions">
+                <button id="again-btn" class="btn btn-primary">↻ Try Again</button>
+                <button id="go-menu-btn" class="btn">🏠 Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ App bootstrap ============ -->
     <script type="text/javascript">
-        let usingKeyboard = false;
-        let game;
-        
-        function resizeWindow() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            game.set_viewport(canvas.width, canvas.height);
-            game.load_map(map);
-        }
+        (function () {
+            'use strict';
 
-        window.requestAnimFrame =
-            window.requestAnimationFrame ||
-            window.webkitRequestAnimationFrame ||
-            window.mozRequestAnimationFrame ||
-            window.oRequestAnimationFrame ||
-            window.msRequestAnimationFrame ||
-            function (callback) {
-                return window.setTimeout(callback, 1000 / 60);
-            };
+            var canvas = document.getElementById('canvas');
+            var game = new Engine(canvas);
 
-        var canvas = document.getElementById('canvas'),
-            ctx = canvas.getContext('2d');
-
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        function handleMobileInput(isPressed, keyCode) {
-            usingKeyboard = false;
-            if (isPressed) {
-                game.keydown({ keyCode: keyCode });
-            } else {
-                game.keyup({ keyCode: keyCode });
+            function resizeWindow() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                game.viewport.x = canvas.width;
+                game.viewport.y = canvas.height;
+                game.resize();
             }
-        }
+            window.addEventListener('resize', resizeWindow);
+            window.addEventListener('orientationchange', resizeWindow);
+            resizeWindow();
 
-        function detectInputMethod(e) {
-            // Check if the event is from a touch or mouse
-            if (e.type === 'keydown' || e.type === 'keyup') {
-                usingKeyboard = true;
-                document.getElementById('controls').style.display = 'none';
-            } else if (e.type === 'touchstart' || e.type === 'mousedown') {
-                usingKeyboard = false;
-                document.getElementById('controls').style.display = 'flex';
+            /* ---------- Mobile / touch input ---------- */
+            var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+            function bindHold(el, key) {
+                function down(e) { e.preventDefault(); game.setMove(key, true); }
+                function up(e) { e.preventDefault(); game.setMove(key, false); }
+                el.addEventListener('touchstart', down, { passive: false });
+                el.addEventListener('touchend', up);
+                el.addEventListener('touchcancel', up);
+                el.addEventListener('mousedown', down);
+                el.addEventListener('mouseup', up);
+                el.addEventListener('mouseleave', up);
             }
-        }
+            bindHold(document.getElementById('btn-left'), 'left');
+            bindHold(document.getElementById('btn-right'), 'right');
+            bindHold(document.getElementById('btn-jump'), 'jump');
 
-        // Add event listeners for input detection
-        document.addEventListener('keydown', detectInputMethod);
-        document.addEventListener('keyup', detectInputMethod);
-        document.addEventListener('touchstart', detectInputMethod);
-        document.addEventListener('mousedown', detectInputMethod);
-
-        /* Toggle fullscreen */
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                openFullscreen();
-            } else {
-                closeFullscreen();
+            /* ---------- HUD buttons ---------- */
+            function toggleFullscreen() {
+                var el = document.documentElement;
+                if (!document.fullscreenElement) {
+                    (el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen).call(el);
+                } else {
+                    (document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen).call(document);
+                }
             }
-        }
+            document.getElementById('fullscreen-btn').addEventListener('click', toggleFullscreen);
 
-        /* View in fullscreen */
-        function openFullscreen() {
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen();
-            } else if (elem.mozRequestFullScreen) { /* Firefox */
-                elem.mozRequestFullScreen();
-            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
-                elem.webkitRequestFullscreen();
-            } else if (elem.msRequestFullscreen) { /* IE/Edge */
-                elem.msRequestFullscreen();
+            document.getElementById('mute-btn').addEventListener('click', function () {
+                var muted = game.audio.isMuted();
+                game.audio.setMuted(!muted);
+                this.textContent = game.audio.isMuted() ? '🔇' : '🔊';
+            });
+
+            document.getElementById('pause-btn').addEventListener('click', function () { game.togglePause(); });
+            document.getElementById('restart-btn').addEventListener('click', function () { game.restart(); });
+
+            document.getElementById('play-btn').addEventListener('click', function () { game.begin(); });
+            document.getElementById('resume-btn').addEventListener('click', function () { game.resumeGame(); });
+            document.getElementById('pause-restart-btn').addEventListener('click', function () { game.restart(); });
+            document.getElementById('pause-menu-btn').addEventListener('click', function () { game.goToMenu(); });
+            document.getElementById('win-play-btn').addEventListener('click', function () { game.restart(); });
+            document.getElementById('win-menu-btn').addEventListener('click', function () { game.goToMenu(); });
+            document.getElementById('again-btn').addEventListener('click', function () { game.restart(); });
+            document.getElementById('go-menu-btn').addEventListener('click', function () { game.goToMenu(); });
+
+            /* Show/hide touch controls based on input method */
+            var controls = document.getElementById('controls');
+            document.addEventListener('keydown', function () {
+                if (!isTouch) controls.style.display = 'none';
+            });
+            document.addEventListener('touchstart', function () {
+                controls.style.display = 'flex';
+            }, { passive: true });
+
+            if (!isTouch) controls.style.display = 'none';
+
+            /* ---------- Load level & start ---------- */
+            fetch('level1.json')
+                .then(function (r) { return r.json(); })
+                .then(function (map) {
+                    game.load_map(map);
+                    document.getElementById('level-name-text').textContent = map.name || 'Level 1';
+                    if (game.maxScore > 0) {
+                        document.getElementById('best-chip').style.display = 'flex';
+                        document.getElementById('best').textContent = String(game.maxScore);
+                    }
+                    game.start();
+                })
+                .catch(function (err) {
+                    console.error('Failed to load level:', err);
+                });
+
+            /* Tap anywhere on the start overlay to begin */
+            document.getElementById('start-screen').addEventListener('click', function () { game.begin(); });
+
+            /* ---------- PWA: register the service worker (network-first) ---------- */
+            if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+                window.addEventListener('load', function () {
+                    navigator.serviceWorker.register('sw.js').catch(function (err) {
+                        console.warn('Service worker registration failed:', err);
+                    });
+                });
             }
-        }
-
-        /* Close fullscreen */
-        function closeFullscreen() {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.mozCancelFullScreen) { /* Firefox */
-                document.mozCancelFullScreen();
-            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
-                document.webkitExitFullscreen();
-            } else if (document.msExitFullscreen) { /* IE/Edge */
-                document.msExitFullscreen();
-            }
-        }
-
-        /* Start */
-        async function gameStart() {
-            game = new Engine();
-            game.set_viewport(canvas.width, canvas.height);
-            map = await fetch('level1.json').then(response => response.json());
-            game.load_map(map);
-
-            game.limit_viewport = true;
-
-            var Loop = function () {
-                ctx.fillStyle = '#333';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                game.update();
-                game.draw(ctx);
-
-                window.requestAnimFrame(Loop);
-            };
-
-            Loop();
-        }
-        
-        // Initialize the game
-        gameStart();
+        })();
     </script>
 </body>
+
 </html>
