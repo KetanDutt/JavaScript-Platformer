@@ -15,6 +15,7 @@
  *    6  spring (bounce)  7  checkpoint        8  goal flag
  *    9  water            10 deco flower       11 start marker
  *    12 crate (solid)    13 enemy (patrol)
+ *    14 moving platform  15 heart (life)      16 star (bonus)
  * ============================================================================ */
 
 'use strict';
@@ -40,7 +41,7 @@ function rect(x1, y1, x2, y2, id) {
 function platform(x, y, w, id) { rect(x, y, x + w - 1, y, id); }
 
 /* ========================================================================
- *  Terrain — base ground across the level with a surface grass layer.
+ *  Terrain Â— base ground across the level with a surface grass layer.
  * ======================================================================== */
 rect(0, HEIGHT - 3, WIDTH - 1, HEIGHT - 3, 2);      /* top dirt row */
 rect(0, HEIGHT - 2, WIDTH - 1, HEIGHT - 1, 2);      /* deeper dirt */
@@ -125,8 +126,16 @@ platform(92, HEIGHT - 6, 3, 2);
 set(6, HEIGHT - 4, 10);
 set(39, HEIGHT - 4, 10);
 set(50, HEIGHT - 4, 10);
-set(72, HEIGHT - 4, 10);
+set(74, HEIGHT - 4, 10);
 set(85, HEIGHT - 4, 10);
+
+/* ========================================================================
+ *  Bonus pickups & moving platforms
+ * ======================================================================== */
+set(12, HEIGHT - 5, 15);                     /* extra life just after the start */
+set(47, 11, 16);                             /* star reward above the spring ledge */
+set(80, 16, 14);                             /* vertical moving platform near the end */
+set(80, 9, 16);                              /* star reachable from the platform */
 
 /* ========================================================================
  *  Start marker & goal flag
@@ -135,7 +144,7 @@ set(2, HEIGHT - 4, 11);                      /* start marker */
 set(95, HEIGHT - 3, 8);                      /* goal flag at far right */
 
 /* ========================================================================
- *  Checkpoints (id 7) — mid-level respawn flags
+ *  Checkpoints (id 7) Â— mid-level respawn flags
  * ======================================================================== */
 set(36, HEIGHT - 3, 7);                      /* after the spike pit */
 set(63, HEIGHT - 3, 7);                      /* after the water section */
@@ -143,9 +152,13 @@ set(86, HEIGHT - 3, 7);                      /* before the final stairs */
 
 /* ========================================================================
  *  Enemy spawns (id 13). range in tiles, speed in px/s.
+ *
+ *  IMPORTANT: enemy markers must be placed in the empty tile immediately ABOVE
+ *  a solid tile (e.g. HEIGHT - 4 when the grass surface row is HEIGHT - 3).
+ *  Placing them in the solid row creates a ground pocket and buries them.
  * ======================================================================== */
-set(44, HEIGHT - 3, 13);                     /* patrol on the main path */
-set(72, HEIGHT - 3, 13);
+set(44, HEIGHT - 4, 13);                     /* patrol on the main path (stands on ground) */
+set(72, HEIGHT - 4, 13);                     /* patrol near the end (stands on ground) */
 
 /* ========================================================================
  *  Tile keys
@@ -164,7 +177,10 @@ var keys = [
     { "id": 10, "type": "deco", "fill": "#f4a3c0" },
     { "id": 11, "type": "start" },
     { "id": 12, "type": "solid", "fill": "#c89b5a", "top": "#dcb67a" },
-    { "id": 13, "type": "enemy", "dir": 1, "range": 3, "speed": 28, "enemyType": "walker" }
+    { "id": 13, "type": "enemy", "dir": 1, "range": 3, "speed": 28, "enemyType": "walker" },
+    { "id": 14, "type": "moving", "axis": "y", "range": 4, "speed": 45, "width": 2, "fill": "#8c9eff" },
+    { "id": 15, "type": "heart" },
+    { "id": 16, "type": "star" }
 ];
 
 /* Player start position in tile coordinates. */

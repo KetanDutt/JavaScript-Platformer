@@ -98,7 +98,7 @@ var documentStub = {
     getElementById: function (id) { return ensureEl(id); },
     querySelector: function (sel) { return ensureEl(sel.replace(/^#/, '')); },
     querySelectorAll: function () { return []; },
-    createElement: function () { return makeElement(); },
+    createElement: function (tag) { return tag === 'canvas' ? makeCanvas() : makeElement(); },
     addEventListener: function () {},
     documentElement: makeElement(),
     body: makeElement()
@@ -137,7 +137,46 @@ game.set_viewport(800, 600);
 game.load_map(level);
 game.state = 'play'; /* bypass menu */
 console.log('Loaded "' + level.name + '"  tiles=' + game.mapWidth + 'x' + game.mapHeight +
-    '  coins=' + game.coinsTotal + '  enemies=' + game.enemies.length);
+    '  coins=' + game.coinsTotal + '  heart=' + game.heartsTotal +
+    '  stars=' + game.starsTotal + '  enemies=' + game.enemies.length +
+    '  platforms=' + game.platforms.length);
+
+assert(game.heartsTotal >= 1, 'level should contain at least one heart pickup');
+assert(game.starsTotal >= 1, 'level should contain at least one star pickup');
+assert(game.platforms.length >= 1, 'level should contain at least one moving platform');
+
+/* Moving platforms should animate. */
+var platStartY = game.platforms.length ? game.platforms[0].y : 0;
+for (var mp = 0; mp < 20; mp++) step(1 / 60);
+if (game.platforms.length) {
+    assert(game.platforms[0].y !== platStartY, 'moving platform should change position over time');
+}
+
+/* Enemies should stand on top of solid ground and patrol over time. */
+for (var ei = 0; ei < game.enemies.length; ei++) {
+    var en = game.enemies[ei];
+    var belowTile = game.tileAt(
+        Math.floor((en.x + en.w / 2) / game.tile_size),
+        Math.floor((en.y + en.h) / game.tile_size)
+    );
+    assert(belowTile && belowTile.type === 'solid',
+        'enemy ' + ei + ' should stand on solid ground (tile=' + (belowTile && belowTile.type) + ')');
+}
+if (game.enemies.length) {
+    var enemyStartX = game.enemies[0].x;
+    for (var em = 0; em < 60; em++) step(1 / 60);
+    assert(Math.abs(game.enemies[0].x - enemyStartX) > 5,
+        'enemy should patrol (moved ' + Math.abs(game.enemies[0].x - enemyStartX).toFixed(1) + 'px)');
+}
+
+/* Player should be carried while riding a moving platform. */
+var ridePlat = game.platforms[0];
+var rideStartTop = ridePlat.y;
+game.spawnPlayer(ridePlat.x, ridePlat.y - game.player.h);
+game.state = 'play';
+for (var rc = 0; rc < 12; rc++) step(1 / 60);
+var playerFeet = game.player.y + game.player.h;
+assert(Math.abs(playerFeet - ridePlat.y) < 3, 'player should stay on top of a moving platform');
 
 var failures = [];
 function assert(cond, msg) {
@@ -162,6 +201,48 @@ function hold(key, frames) {
 for (var b = 0; b < 10; b++) step(1 / 60);
 assert(isFinite(game.player.x) && isFinite(game.player.y), 'player pos should be finite');
 assert(isFinite(game.player.vx) && isFinite(game.player.vy), 'player vel should be finite');
+
+/* Heart & star pickups. */
+var livesBeforeHeart = game.lives;
+game.spawnPlayer(game.hearts[0].x, game.hearts[0].y);
+game.state = 'play';
+for (var hc = 0; hc < 5; hc++) step(1 / 60);
+assert(game.hearts[0].collected, 'heart should be collectible');
+assert(game.lives > livesBeforeHeart, 'heart should add a life when max not reached');
+
+var scoreBeforeStar = game.score;
+game.spawnPlayer(game.stars[0].x, game.stars[0].y);
+game.state = 'play';
+for (var sc = 0; sc < 5; sc++) step(1 / 60);
+assert(game.stars[0].collected, 'star should be collectible');
+assert(game.score >= scoreBeforeStar + 500, 'star should award +500');
+
+/* Camera should always keep the player inside the visible browser window
+   for a range of inner sizes (screen pixels -> world viewport conversion). */
+function assertCameraTracks(width, height) {
+    global.innerWidth = width;
+    global.innerHeight = height;
+    game.resize();
+    game.spawnPlayer(game.respawn.x, game.respawn.y);
+    game.state = 'play';
+    for (var c = 0; c < 5; c++) step(1 / 60);
+    var camScale = game._worldScale();
+    var px = (game.player.x + game.player.w / 2 - game.camera.x) * camScale;
+    var py = (game.player.y + game.player.h / 2 - game.camera.y) * camScale;
+    assert(px >= -game.player.w * camScale - 1 && px <= width + game.player.w * camScale + 1,
+        'camera should keep player horizontally on screen at ' + width + 'x' + height + ' (got ' + px.toFixed(1) + ')');
+    assert(py >= -game.player.h * camScale - 1 && py <= height + game.player.h * camScale + 1,
+        'camera should keep player vertically on screen at ' + width + 'x' + height + ' (got ' + py.toFixed(1) + ')');
+}
+[[800, 600], [640, 400], [1200, 800], [1920, 1080], [800, 800]].forEach(function (size) {
+    assertCameraTracks(size[0], size[1]);
+});
+global.innerWidth = 800;
+global.innerHeight = 600;
+game.resize();
+game.spawnPlayer(game.respawn.x, game.respawn.y);
+game.state = 'play';
+for (var rc = 0; rc < 5; rc++) step(1 / 60);
 
 /* Simple controller: run right and jump occasionally; also test a full rAF
    loop to make sure the render path executes. */
@@ -213,8 +294,10 @@ assert(game.lives < 3 || game.state !== 'play', 'death handling ran');
 /* Win path: force reach goal */
 game.spawnPlayer(game.goal.x, game.goal.y - 4);
 game.state = 'play';
+var preWinScore = game.score;
 for (var w = 0; w < 20; w++) step(1 / 60);
 assert(game.state === 'won', 'goal should trigger win, got ' + game.state);
+assert(game.score >= preWinScore + 500, 'win should award a +500 level-complete bonus');
 
 /* State transitions & API: restart, pause/resume, menu, mute, begin */
 try {
@@ -233,6 +316,15 @@ try {
     game.audio.setMuted(false);
     assert(!game.audio.isMuted(), 'unmute should be reflected');
 
+    game.applySettings({ sfx: true, music: false, sfxVolume: 0.5, musicVolume: 0.25, reducedMotion: true, showControls: false });
+    var got = game.getSettings();
+    assert(got.sfx === true && got.music === false, 'settings should apply');
+    assert(Math.abs(got.sfxVolume - 0.5) < 0.001, 'sfx volume should persist in settings');
+    assert(got.reducedMotion === true, 'reduced-motion setting should persist');
+    game.resetSettings();
+    got = game.getSettings();
+    assert(got.sfx === true && got.music === true && got.reducedMotion === false, 'settings reset should restore defaults');
+
     /* Make sure the rAF loop keeps running cleanly after all that */
     for (var f2 = 0; f2 < 30; f2++) step(1 / 60);
 } catch (e) {
@@ -244,6 +336,6 @@ if (failures.length === 0) {
     console.log('\nSMOKE TEST PASSED ?');
     process.exit(0);
 } else {
-    console.error('\nSMOKE TEST FAILED — ' + failures.length + ' issue(s)');
+    console.error('\nSMOKE TEST FAILED Â— ' + failures.length + ' issue(s)');
     process.exit(1);
 }
