@@ -127,4 +127,8 @@ writes the JSON to `level1.json`.
 - Use `checkpoint` tiles before difficult sections so failures feel fair.
 - Water is easiest as a shallow channel (2-3 tiles deep) sitting on solid ground
   with entry/exit lips.
-- Moving platforms are a great way to gate rewards like stars or hearts.
+- **Enemies must be placed in the empty tile immediately above a solid tile**
+  so their feet rest on the surface. For example, if the grass surface row is
+  `HEIGHT - 3`, place a walking enemy at `HEIGHT - 4`. Placing it inside the
+  solid row removes the ground tile and buries the enemy in a pocket.
+- Move the decoration if it occupies the enemy's new cell.

@@ -30,6 +30,9 @@ All notable changes to this project are documented here.
   `server.js` with gzip and security headers; upgraded service worker cache.
 
 ### Fixed
+- Enemies are now spawned one tile **above** the solid ground surface. They
+  previously replaced the ground tile, which buried them in a moving pocket
+  instead of walking along the floor.
 - Camera now uses **world-space viewport dimensions** (`viewport / worldScale`)
   instead of raw screen pixels, so the player and ground no longer fall off
   screen on larger windows.

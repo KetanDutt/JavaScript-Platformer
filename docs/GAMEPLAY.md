@@ -23,7 +23,8 @@ Settings.
 2. Collect **coins** (+100), **hearts** (+1 life or +250), and **stars** (+500)
    along the way.
 3. **Stomp enemies** — jump on top of them to defeat them (bouncing you up).
-   Touching their sides hurts you.
+   Touching their sides hurts you. Enemies patrol along the ground surface
+   (they are spawned one tile above solid ground).
 4. Avoid **spikes** and falling into hazards.
 5. Ride **springs** and **moving platforms** to reach high areas.
 6. Pass through **checkpoints** to set your respawn point.

@@ -152,6 +152,23 @@ if (game.platforms.length) {
     assert(game.platforms[0].y !== platStartY, 'moving platform should change position over time');
 }
 
+/* Enemies should stand on top of solid ground and patrol over time. */
+for (var ei = 0; ei < game.enemies.length; ei++) {
+    var en = game.enemies[ei];
+    var belowTile = game.tileAt(
+        Math.floor((en.x + en.w / 2) / game.tile_size),
+        Math.floor((en.y + en.h) / game.tile_size)
+    );
+    assert(belowTile && belowTile.type === 'solid',
+        'enemy ' + ei + ' should stand on solid ground (tile=' + (belowTile && belowTile.type) + ')');
+}
+if (game.enemies.length) {
+    var enemyStartX = game.enemies[0].x;
+    for (var em = 0; em < 60; em++) step(1 / 60);
+    assert(Math.abs(game.enemies[0].x - enemyStartX) > 5,
+        'enemy should patrol (moved ' + Math.abs(game.enemies[0].x - enemyStartX).toFixed(1) + 'px)');
+}
+
 /* Player should be carried while riding a moving platform. */
 var ridePlat = game.platforms[0];
 var rideStartTop = ridePlat.y;

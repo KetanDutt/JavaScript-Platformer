@@ -126,7 +126,7 @@ platform(92, HEIGHT - 6, 3, 2);
 set(6, HEIGHT - 4, 10);
 set(39, HEIGHT - 4, 10);
 set(50, HEIGHT - 4, 10);
-set(72, HEIGHT - 4, 10);
+set(74, HEIGHT - 4, 10);
 set(85, HEIGHT - 4, 10);
 
 /* ========================================================================
@@ -152,9 +152,13 @@ set(86, HEIGHT - 3, 7);                      /* before the final stairs */
 
 /* ========================================================================
  *  Enemy spawns (id 13). range in tiles, speed in px/s.
+ *
+ *  IMPORTANT: enemy markers must be placed in the empty tile immediately ABOVE
+ *  a solid tile (e.g. HEIGHT - 4 when the grass surface row is HEIGHT - 3).
+ *  Placing them in the solid row creates a ground pocket and buries them.
  * ======================================================================== */
-set(44, HEIGHT - 3, 13);                     /* patrol on the main path */
-set(72, HEIGHT - 3, 13);
+set(44, HEIGHT - 4, 13);                     /* patrol on the main path (stands on ground) */
+set(72, HEIGHT - 4, 13);                     /* patrol near the end (stands on ground) */
 
 /* ========================================================================
  *  Tile keys
