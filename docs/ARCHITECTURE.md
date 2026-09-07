@@ -85,6 +85,24 @@ This eliminates jitter and frame-rate dependence.
   is visible across screen sizes. `_worldScale()` derives the scale from canvas
   height, clamped to a sane range.
 
+### Camera
+
+The camera uses **world-space viewport dimensions** derived from the browser
+inner window:
+
+```js
+view.width  = viewport.x / worldScale;
+view.height = viewport.y / worldScale;
+```
+
+`_centerCameraOnPlayer()` computes the target as the player's center minus half
+of that world-space viewport (plus a velocity-based look-ahead). It is called
+with `snap=true` on player spawn and window resize so the player is always
+visible, and with `snap=false` every gameplay step so the camera smoothly
+follows. `_clampCamera()` keeps the window inside the map bounds; when the view
+is larger than the map in either axis, the map is clamped to one edge, which
+still keeps the player on-screen.
+
 ## Rendering
 
 `draw()` proceeds as:

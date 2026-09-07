@@ -30,6 +30,11 @@ All notable changes to this project are documented here.
   `server.js` with gzip and security headers; upgraded service worker cache.
 
 ### Fixed
+- Camera now uses **world-space viewport dimensions** (`viewport / worldScale`)
+  instead of raw screen pixels, so the player and ground no longer fall off
+  screen on larger windows.
+- Camera recenters on window resize/orientation changes, keeping the player on
+  screen at any browser inner window size.
 - Spring pads no longer override the spring-stretch squash with landing squash.
 - Springs no longer leave the player flagged as grounded, which had enabled an
   unintended mid-air jump immediately after a bounce.

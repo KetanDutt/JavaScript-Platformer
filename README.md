@@ -30,7 +30,8 @@ code, so it runs anywhere a browser runs.
   - Particle effects (jump, landing, run dust, coin/heart/star, stomp, spring,
     death, water splash, win confetti)
   - World-space score popups and animated pickups
-  - Smooth camera follow with look-ahead + screen shake
+  - Player-centered camera that adapts to the browser window size (world-space
+    viewport math), with smooth look-ahead + screen shake
   - Parallax sky, clouds, hills and bushes
   - Animated coins, stars, hearts, flags, enemies and moving platforms
   - Tween-based HUD score count-up and animated water ripples

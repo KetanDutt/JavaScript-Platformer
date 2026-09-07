@@ -587,7 +587,8 @@
         this.canvas.height = h;
         this.viewport.x = w;
         this.viewport.y = h;
-        this._clampCamera();
+        /* Recenter the camera so the player stays visible on resize orientation changes. */
+        this._centerCameraOnPlayer(true);
     };
 
     Engine.prototype._bindInput = function () {
@@ -897,11 +898,9 @@
         p.groundPlatform = null;
         p._wasInWater = false;
         p._runDustTimer = 0;
-        this.camera.x = x - this.viewport.x / 2 + p.w / 2;
-        this.camera.y = y - this.viewport.y / 2 + p.h / 2;
-        this.cameraTarget.x = this.camera.x;
-        this.cameraTarget.y = this.camera.y;
-        this._clampCamera();
+        /* Center the camera on the player using the viewport in WORLD pixels
+           (the browser window size divided by the world scale). */
+        this._centerCameraOnPlayer(true);
     };
 
     /* ==========================================================================
@@ -1569,32 +1568,57 @@
      *  Camera
      * ======================================================================== */
 
-    Engine.prototype._updateCamera = function () {
-        var p = this.player;
-        var cx = p.x + p.w / 2 - this.viewport.x / 2;
-        var cy = p.y + p.h / 2 - this.viewport.y / 2;
+    /* Return the camera viewport dimensions in WORLD pixels. The canvas is
+       scaled by `_worldScale()`, so the browser window must be divided by that
+       scale before it can be used for world-space camera math. */
+    Engine.prototype._cameraView = function () {
+        var scale = this._worldScale();
+        return {
+            scale: scale,
+            width: this.viewport.x / scale,
+            height: this.viewport.y / scale
+        };
+    };
 
+    /* Compute the world-space camera target that keeps the player centered.
+       `snap` teleports the camera immediately (used on spawn/resize); otherwise
+       the camera smoothly follows the target. */
+    Engine.prototype._centerCameraOnPlayer = function (snap) {
+        var p = this.player;
+        var view = this._cameraView();
         var look = clamp(p.vx * 8, -40, 40);
-        this.lookAhead = lerp(this.lookAhead, look, 0.1);
-        cx += this.lookAhead;
+        this.lookAhead = snap ? look : lerp(this.lookAhead, look, 0.1);
+
+        var cx = p.x + p.w / 2 - view.width / 2 + this.lookAhead;
+        var cy = p.y + p.h / 2 - view.height / 2;
 
         this.cameraTarget.x = cx;
         this.cameraTarget.y = cy;
-        this.camera.x = lerp(this.camera.x, cx, 0.12);
-        this.camera.y = lerp(this.camera.y, cy, 0.12);
+        this._clampCamera();
+
+        if (snap) {
+            this.camera.x = this.cameraTarget.x;
+            this.camera.y = this.cameraTarget.y;
+        }
+    };
+
+    Engine.prototype._updateCamera = function () {
+        this._centerCameraOnPlayer(false);
+        this.camera.x = lerp(this.camera.x, this.cameraTarget.x, 0.12);
+        this.camera.y = lerp(this.camera.y, this.cameraTarget.y, 0.12);
         this._clampCamera();
     };
 
     Engine.prototype._clampCamera = function () {
         if (!this.limit_viewport) return;
         if (this.mapWidth === undefined || this.mapHeight === undefined) return;
-        var scale = this._worldScale();
-        var vwWorld = this.viewport.x / scale;
-        var vhWorld = this.viewport.y / scale;
-        this.camera.x = clamp(this.camera.x, 0, Math.max(0, this.mapWidth - vwWorld));
-        this.camera.y = clamp(this.camera.y, 0, Math.max(0, this.mapHeight - vhWorld));
-        this.cameraTarget.x = clamp(this.cameraTarget.x, 0, Math.max(0, this.mapWidth - vwWorld));
-        this.cameraTarget.y = clamp(this.cameraTarget.y, 0, Math.max(0, this.mapHeight - vhWorld));
+        var view = this._cameraView();
+        var maxX = Math.max(0, this.mapWidth - view.width);
+        var maxY = Math.max(0, this.mapHeight - view.height);
+        this.cameraTarget.x = clamp(this.cameraTarget.x, 0, maxX);
+        this.cameraTarget.y = clamp(this.cameraTarget.y, 0, maxY);
+        this.camera.x = clamp(this.camera.x, 0, maxX);
+        this.camera.y = clamp(this.camera.y, 0, maxY);
     };
 
     Engine.prototype._shake = function (dur, mag) {
@@ -2066,8 +2090,9 @@
 
     Engine.prototype._confetti = function () {
         if (this.reducedMotion) return;
+        var view = this._cameraView();
         for (var i = 0; i < 6; i++) {
-            this.particles.spawn(this.camera.x + this.viewport.x / 2, this.camera.y + 30, {
+            this.particles.spawn(this.camera.x + view.width / 2, this.camera.y + 30, {
                 count: 14,
                 colour: ['#ff7043', '#ffd54a', '#4bdc8a', '#73c6fa', '#e373fa'][i % 5],
                 speedMin: 2, speedMax: 6, life: 1.2, gravity: 0.05, shape: 'rect'

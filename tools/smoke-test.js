@@ -200,6 +200,33 @@ for (var sc = 0; sc < 5; sc++) step(1 / 60);
 assert(game.stars[0].collected, 'star should be collectible');
 assert(game.score >= scoreBeforeStar + 500, 'star should award +500');
 
+/* Camera should always keep the player inside the visible browser window
+   for a range of inner sizes (screen pixels -> world viewport conversion). */
+function assertCameraTracks(width, height) {
+    global.innerWidth = width;
+    global.innerHeight = height;
+    game.resize();
+    game.spawnPlayer(game.respawn.x, game.respawn.y);
+    game.state = 'play';
+    for (var c = 0; c < 5; c++) step(1 / 60);
+    var camScale = game._worldScale();
+    var px = (game.player.x + game.player.w / 2 - game.camera.x) * camScale;
+    var py = (game.player.y + game.player.h / 2 - game.camera.y) * camScale;
+    assert(px >= -game.player.w * camScale - 1 && px <= width + game.player.w * camScale + 1,
+        'camera should keep player horizontally on screen at ' + width + 'x' + height + ' (got ' + px.toFixed(1) + ')');
+    assert(py >= -game.player.h * camScale - 1 && py <= height + game.player.h * camScale + 1,
+        'camera should keep player vertically on screen at ' + width + 'x' + height + ' (got ' + py.toFixed(1) + ')');
+}
+[[800, 600], [640, 400], [1200, 800], [1920, 1080], [800, 800]].forEach(function (size) {
+    assertCameraTracks(size[0], size[1]);
+});
+global.innerWidth = 800;
+global.innerHeight = 600;
+game.resize();
+game.spawnPlayer(game.respawn.x, game.respawn.y);
+game.state = 'play';
+for (var rc = 0; rc < 5; rc++) step(1 / 60);
+
 /* Simple controller: run right and jump occasionally; also test a full rAF
    loop to make sure the render path executes. */
 var simFrames = 60 * 15;

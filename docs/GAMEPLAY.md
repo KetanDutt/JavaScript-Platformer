@@ -53,6 +53,14 @@ screen.
 - **Checkpoints** move your respawn point forward, so you don't have to replay
   the whole level.
 
+## Camera
+
+The camera always tracks the player using the actual browser window size. The
+visible world window is derived from `viewport / worldScale`, so the player
+stays on-screen on any aspect ratio, window size, or orientation change. The
+camera smoothly follows with a small look-ahead in the direction of movement
+and is clamped to the level bounds.
+
 ## Juice / feedback
 
 The game gives constant feedback to make failures and successes readable:
