@@ -11,6 +11,7 @@ the generated `level1.json` directly, or (recommended) edit
   "name": "My Level",
   "tile_size": 16,
   "lives": 3,
+  "max_lives": 5,
   "keys": [
     { "id": 0, "type": "empty" },
     { "id": 1, "type": "solid", "fill": "#6bbf4b", "top": "#8fd96a" }
@@ -31,25 +32,29 @@ the generated `level1.json` directly, or (recommended) edit
 - `keys` defines the tile palette. Only keys used in `data` should exist.
 - `player.x` / `player.y` are **tile coordinates** (not pixels).
 - Spawn coordinates for entities placed as tiles are also tile coordinates.
+- `max_lives` caps how many lives a heart can restore.
 
 ## Tile reference
 
-| id | type       | description                                                |
-| -- | ---------- | --------------------------------------------------------- |
-| 0  | `empty`    | Nothing.                                                   |
-| 1  | `solid`    | Grass surface (green top over dirt).                       |
-| 2  | `solid`    | Dirt block.                                                |
-| 3  | `solid`    | Stone block.                                               |
-| 4  | `coin`     | Collectible (score +100).                                  |
-| 5  | `hazard`   | Spikes — touching them kills you.                          |
-| 6  | `spring`   | Bounce pad (`bounce` = launch velocity in px/s).           |
-| 7  | `checkpoint`| Sets the respawn point.                                    |
-| 8  | `goal`     | Reaching it wins the level.                                |
-| 9  | `water`    | Low-gravity zone (reduces gravity, damping).               |
-| 10 | `deco`     | Decorative flower/bush.                                    |
-| 11 | `start`    | Start marker (`startId`).                                   |
-| 12 | `solid`    | Crate block.                                               |
-| 13 | `enemy`    | Patrolling enemy; `dir`, `range` (tiles), `speed` (px/s).  |
+| id | type         | description                                                 |
+| -- | ------------ | ----------------------------------------------------------- |
+| 0  | `empty`      | Nothing.                                                    |
+| 1  | `solid`      | Grass surface (green top over dirt).                        |
+| 2  | `solid`      | Dirt block.                                                 |
+| 3  | `solid`      | Stone block.                                                |
+| 4  | `coin`       | Collectible (score +100).                                   |
+| 5  | `hazard`     | Spikes â€” touching them kills you.                           |
+| 6  | `spring`     | Bounce pad (`bounce` = launch velocity).                    |
+| 7  | `checkpoint` | Sets the respawn point.                                     |
+| 8  | `goal`       | Reaching it wins the level.                                 |
+| 9  | `water`      | Low-gravity zone (reduces gravity, damping).                |
+| 10 | `deco`       | Decorative flower/bush.                                     |
+| 11 | `start`      | Start marker (`startId`).                                   |
+| 12 | `solid`      | Crate block.                                                |
+| 13 | `enemy`      | Patrolling enemy; `dir`, `range` (tiles), `speed` (px/s).   |
+| 14 | `moving`     | Moving platform. See options below.                         |
+| 15 | `heart`      | Restores +1 life (or +250 at max lives).                    |
+| 16 | `star`       | Collectible bonus worth +500.                               |
 
 ### Tile key options
 
@@ -57,20 +62,40 @@ the generated `level1.json` directly, or (recommended) edit
 { "id": 1, "type": "solid", "fill": "#6bbf4b", "top": "#8fd96a" }
 ```
 
-- `fill` — main body colour.
-- `top` — highlight strip colour for solid tiles.
-- `bounce` (spring) — upward launch velocity in px/s.
-- `dir`, `range`, `speed` (enemy) — patrol direction, range in tiles, speed in
+- `fill` â€” main body colour.
+- `top` â€” highlight strip colour for solid tiles.
+- `bounce` (spring) â€” upward launch velocity.
+- `dir`, `range`, `speed` (enemy) â€” patrol direction, range in tiles, speed in
   px/s.
+
+### Moving platforms
+
+```json
+{
+  "id": 14,
+  "type": "moving",
+  "axis": "y",
+  "range": 4,
+  "speed": 45,
+  "width": 2,
+  "fill": "#8c9eff"
+}
+```
+
+- `axis` â€” `"x"` (horizontal) or `"y"` (vertical).
+- `range` â€” travel range in tiles from the base tile.
+- `speed` â€” movement speed in px/s.
+- `width` â€” platform width in tiles (default `1`).
+- `fill` â€” platform colour.
 
 ## Physics tuning
 
-- `gravity.y` — downward acceleration per 60 Hz step (e.g. `0.25`).
-- `vel_limit.x` — max horizontal speed (px/step).
-- `vel_limit.y` — max fall speed (px/step).
-- `movement_speed.jump` — initial jump impulse (px/step, negative velocity).
-- `movement_speed.left/right` — horizontal acceleration (px/step²).
-- `movement_speed.air` — airborne acceleration multiplier (e.g. `0.35`).
+- `gravity.y` â€” downward acceleration per 60 Hz step (e.g. `0.25`).
+- `vel_limit.x` â€” max horizontal speed (px/step).
+- `vel_limit.y` â€” max fall speed (px/step).
+- `movement_speed.jump` â€” initial jump impulse (px/step).
+- `movement_speed.left/right` â€” horizontal acceleration (px/step).
+- `movement_speed.air` â€” airborne acceleration multiplier (e.g. `0.35`).
 
 ## Authoring tool
 
@@ -95,10 +120,11 @@ writes the JSON to `level1.json`.
 
 ## Tips
 
-- Keep the outer edges safe: either wall the level off with solid tiles or rely
-  on the engine's player bounds clamp.
+- Keep the outer edges safe: wall the level off with solid tiles or rely on the
+  engine's player bounds clamp.
 - Place a `start` tile (id `startId`, default `11`) and a `goal` tile for a
   playable level.
 - Use `checkpoint` tiles before difficult sections so failures feel fair.
-- Water is easiest as a shallow channel (2–3 tiles deep) sitting on solid ground
+- Water is easiest as a shallow channel (2-3 tiles deep) sitting on solid ground
   with entry/exit lips.
+- Moving platforms are a great way to gate rewards like stars or hearts.

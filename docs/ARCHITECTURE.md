@@ -1,18 +1,19 @@
 # Architecture
 
 This document explains how the Green Hills platformer engine is put together.
-Everything lives in `engine.js`, a single self-contained IIFE that exposes a
-global `Engine` constructor. The UI lives in `index.html` + `style.css`.
+Everything gameplay-critical lives in `engine.js`, a single self-contained IIFE
+that exposes a global `Engine` constructor. The UI lives in `index.html` +
+`style.css`.
 
 ## Overview
 
 ```
 index.html            -- creates <canvas>, new Engine(canvas), loads level, starts loop
-        ¦
-        ?
+        |
+        v
 engine.js  Engine     -- state machine, input, physics, rendering, audio, effects
-        ¦
-        ?
+        |
+        v
 level1.json           -- tile grid + physics constants + spawn data
 ```
 
@@ -35,14 +36,14 @@ via the accumulator.
 
 The engine keeps a single `state` string that gates what updates run:
 
-| State        | What happens                                                  |
-| ------------ | ------------------------------------------------------------- |
-| `menu`       | Overlay shown; world is rendered but the player is hidden.    |
-| `play`       | Full physics, collisions, camera, HUD, timers.                |
-| `paused`     | Freeze; pause overlay shown.                                  |
-| `lost`       | Death animation; after a delay respawn or game over.          |
-| `won`        | Level complete overlay + confetti.                            |
-| `gameover`   | No lives left overlay.                                        |
+| State      | What happens                                                  |
+| ---------- | ------------------------------------------------------------- |
+| `menu`     | Overlay shown; world is rendered but the player is hidden.    |
+| `play`     | Full physics, collisions, camera, HUD, timers.                |
+| `paused`   | Freeze; pause overlay shown.                                  |
+| `lost`     | Death animation; after a delay respawn or game over.          |
+| `won`      | Level complete overlay + confetti + bonus.                    |
+| `gameover` | No lives left overlay.                                        |
 
 ## Physics
 
@@ -56,24 +57,28 @@ The engine keeps a single `state` string that gates what updates run:
   jump height**.
 - **Gravity**: applied each step; reduced in water and while holding jump
   upward.
+- **Moving platforms**: the player is carried by the platform's per-frame delta
+  while standing on it, then re-collides with tiles/platforms each step.
 
 ### Collision (`_moveX` / `_moveY`)
 
-Collision is **axis-separated AABB vs. tile grid**:
+Collision is **axis-separated AABB against the tile grid plus dynamic moving
+platforms**:
 
 1. Move along X, then resolve against the first solid tile in the direction of
-   travel (snap flush, zero the velocity).
-2. Move along Y, then resolve upward (ceiling) or downward (floor). A downward
-   resolution sets `on_floor`, refreshes `coyote`, triggers landing juice, and
-   handles spring pads (bounce).
+   travel. Moving platforms are also resolved horizontally when the player is
+   not already riding them.
+2. Move along Y, then resolve upward (ceiling) or downward (floor/spring/
+   platform). A downward resolution sets `on_floor`, refreshes `coyote`,
+   triggers landing juice, and handles spring pads (bounce) or platform
+   landing.
 
-This replaces the original `while`-loop overlap fixes, eliminating jitter and
-frame-rate dependence.
+This eliminates jitter and frame-rate dependence.
 
 ### Unit conventions
 
 - Tile size `16` px (overridable per level).
-- Player hitbox ˜ `0.7 × 0.9` tiles.
+- Player hitbox â€” `0.7 x 0.9` tiles.
 - World coordinates are pixels; spawn coordinates in level JSON are **tile
   coordinates** (so authoring is easier).
 - The world is drawn under a `ctx.scale(scale)` so a consistent number of tiles
@@ -84,20 +89,21 @@ frame-rate dependence.
 
 `draw()` proceeds as:
 
-1. Clear the canvas.
-2. `_drawBackground` — screen-fixed sky gradient + parallax clouds/hills/bushes.
-   Parallax layers pre-offset their world position by `camera*(1-factor)` so
-   they appear to move slower than the main world.
-3. Save, `scale(scale)`, translate by `-camera` (+ screen shake offset).
-4. Draw tiles, decorations, coins, checkpoints, goal, enemies, player, and
-   particles — all culled to the visible tile range.
-5. Restore and draw HUD (the DOM handles the readable overlay; canvas handles
-   world + particles).
+1. Clear and paint a screen-space sky gradient (cached per viewport height).
+2. Save, `scale(scale)`, translate by `-camera` (+ screen shake offset).
+3. `_drawParallax` â€” clouds, hills, bushes with parallax offsets.
+4. `_drawTiles` â€” when available, draw the **pre-rendered static layer** from
+   an offscreen canvas with a visible-range slice; otherwise fall back to live
+   tile drawing.
+5. Water ripples, moving platforms, pickups, checkpoints, goal, enemies,
+   player, water highlight, particles, floaters.
+6. Restore.
 
 ### Culling
 
 `_drawTiles` computes the visible tile range from `camera` and `worldScale` and
-only iterates those cells, so large levels stay cheap.
+only iterates/draws those cells. The static-layer path slices the offscreen
+canvas directly, so even large levels stay cheap.
 
 ## Input
 
@@ -105,24 +111,44 @@ only iterates those cells, so large levels stay cheap.
   `left` / `right` / `jump` via `_setInput`. Key repeat is harmless because we
   only track booleans.
 - **Touch/on-screen**: `setMove('left', true)` etc. are wired to the DOM buttons
-  in `index.html`. Jump press sets a `jumpBuffer` so a tap always registers.
+  in `index.html`. Pointer events are used when available for multi-touch
+  friendliness.
+- **Gamepad**: `_updateGamepad()` polls `navigator.getGamepads()` and maps the
+  left stick/D-pad, face buttons, and Start-to-pause into the same input
+  abstractions.
 - **Input method detection**: the HUD hides the touch controls when a keyboard
-  is used and shows them on touch devices.
+  is used and shows them on touch devices / gamepads (if enabled in Settings).
 
 ## Audio
 
 `AudioFX` lazily creates a single `AudioContext` on the first user gesture (to
-satisfy browser autoplay policies) and exposes synthesized sounds via `tone`
-and `noise`. A light look-ahead scheduler plays a looping chiptune melody + bass
-that can be muted. There are **no audio files**; everything is synthesized.
+satisfy browser autoplay policies). It exposes separate **SFX** and **music**
+gain buses so the two can be toggled and volume-controlled independently.
+
+All sounds are synthesized (`tone`, `noise`) â€” **no audio files**. A
+look-ahead scheduler plays a looping chiptune melody + bass that can be muted.
 
 ## Effects
 
-- **Particles** — a simple pool of circles/rects with velocity, gravity, and
-  life. Spawned on jump, land, coin, stomp, spring, death, water entry, and win.
-- **Tweens** — a minimal tween registry (`tween`, `_updateTweens`) with easing,
+- **Particles** â€” a capped pool of circles/rects with velocity, gravity and
+  life. Spawned on jump, land, run, coin, heart, star, stomp, spring, death,
+  water entry, and win.
+- **Floaters** â€” world-space text popups (e.g. `+100`, `+500`, `+1 LIFE`).
+- **Tweens** â€” a minimal tween registry (`tween`, `_updateTweens`) with easing,
   `onUpdate`, and `onComplete`. Used for the score count-up reveal.
-- **Screen shake** — `_shake(duration, magnitude)`; applied as a random offset
-  while `shake.t > 0`.
-- **Squash & stretch** — the player's `squash` value expands on jump and
+- **Screen shake** â€” `_shake(duration, magnitude)`; applied as a random offset
+  while `shake.t > 0`. Disabled by reduced-motion settings.
+- **Squash & stretch** â€” the player's `squash` value expands on jump and
   contracts on land, then eases back to 1.
+
+## Settings
+
+The engine stores and applies a lightweight settings object:
+
+- `sfx` / `music` toggles
+- `sfxVolume` / `musicVolume` (0â€“1)
+- `reducedMotion`
+- `showControls`
+
+Settings persist to `localStorage` through `Engine.prototype.applySettings` and
+are read at construction time. `resetSettings()` restores defaults.

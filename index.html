@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="description" content="Green Hills — a polished, production-ready HTML5 platformer.">
+    <meta name="description" content="Green Hills — a polished, dependency-free HTML5 platformer with cinematics, effects and synthesized audio.">
     <meta name="theme-color" content="#0175C2">
 
     <!-- iOS PWA -->
@@ -14,15 +14,11 @@
 
     <title>Green Hills — Platformer</title>
 
-    <!-- Icons / manifest -->
     <link rel="apple-touch-icon" href="icons/Icon-192.png">
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="manifest" href="manifest.json">
 
-    <!-- Styles -->
     <link rel="stylesheet" type="text/css" href="style.css">
-
-    <!-- Engine -->
     <script type="text/javascript" src="engine.js"></script>
 </head>
 
@@ -30,7 +26,7 @@
     <canvas id="canvas"></canvas>
 
     <!-- ============ HUD ============ -->
-    <div id="hud">
+    <div id="hud" aria-label="Game HUD">
         <div class="hud-group hud-left">
             <div class="hud-chip">
                 <span class="hud-icon">★</span>
@@ -39,6 +35,10 @@
             <div class="hud-chip">
                 <span class="hud-icon">🪙</span>
                 <span id="coins" class="hud-value">0 / 0</span>
+            </div>
+            <div class="hud-chip">
+                <span class="hud-icon">💫</span>
+                <span id="stars" class="hud-value">0 / 0</span>
             </div>
             <div class="hud-chip" title="Lives">
                 <span class="hud-icon">❤️</span>
@@ -68,7 +68,7 @@
         </div>
     </div>
 
-    <!-- ============ Mobile controls ============ -->
+    <!-- ============ Mobile / touch controls ============ -->
     <div id="controls">
         <div id="dpad-left" class="control-side">
             <button class="dpad-btn" id="btn-left" aria-label="Move left">◀</button>
@@ -80,7 +80,7 @@
     </div>
 
     <!-- ============ Toasts ============ -->
-    <div id="toast"></div>
+    <div id="toast" role="status" aria-live="polite"></div>
 
     <!-- ============ Start screen ============ -->
     <div id="start-screen" class="overlay visible">
@@ -89,12 +89,56 @@
             <p class="tagline">A polished HTML5 platformer</p>
             <div class="controls-help">
                 <div class="help-row"><kbd>◀</kbd><kbd>▶</kbd> Move</div>
-                <div class="help-row"><kbd>▲</kbd> / <kbd>Space</kbd> Jump</div>
+                <div class="help-row"><kbd>▲</kbd> / <kbd>Space</kbd> Jump (hold for higher)</div>
                 <div class="help-row"><kbd>Esc</kbd> Pause</div>
+                <div class="help-row">🎮 Gamepad supported</div>
                 <div class="help-row">Touch controls on mobile 📱</div>
             </div>
-            <button id="play-btn" class="btn btn-primary">▶&nbsp; Play</button>
-            <p class="hint">Collect coins, stomp enemies, and reach the flag!</p>
+            <div class="panel-actions">
+                <button id="play-btn" class="btn btn-primary">▶&nbsp; Play</button>
+                <button id="start-settings-btn" class="btn">⚙&nbsp; Settings</button>
+            </div>
+            <p class="hint">Collect coins, hearts and stars. Stomp enemies, ride springs, survive the spikes, and reach the flag!</p>
+        </div>
+    </div>
+
+    <!-- ============ Settings screen ============ -->
+    <div id="settings-screen" class="overlay hidden">
+        <div class="panel">
+            <h2>Settings</h2>
+            <div class="settings-grid">
+                <div class="setting-row">
+                    <span class="setting-label">Sound effects</span>
+                    <button id="sfx-toggle" class="toggle-btn" aria-pressed="true">On</button>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label">Music</span>
+                    <button id="music-toggle" class="toggle-btn" aria-pressed="true">On</button>
+                </div>
+                <label class="setting-slider">
+                    <span>SFX volume</span>
+                    <input id="sfx-volume" type="range" min="0" max="100" step="1" value="80" aria-label="Sound effects volume">
+                    <output id="sfx-volume-label">80%</output>
+                </label>
+                <label class="setting-slider">
+                    <span>Music volume</span>
+                    <input id="music-volume" type="range" min="0" max="100" step="1" value="60" aria-label="Music volume">
+                    <output id="music-volume-label">60%</output>
+                </label>
+                <label class="setting-check">
+                    <input id="reduced-motion" type="checkbox">
+                    <span>Reduced motion (fewer shakes &amp; particles)</span>
+                </label>
+                <label class="setting-check">
+                    <input id="show-controls" type="checkbox">
+                    <span>Show on-screen controls</span>
+                </label>
+            </div>
+            <div class="panel-actions">
+                <button id="settings-save" class="btn btn-primary">✔&nbsp; Done</button>
+                <button id="settings-reset" class="btn">Reset</button>
+            </div>
+            <p class="hint">Settings are saved automatically on this device.</p>
         </div>
     </div>
 
@@ -105,6 +149,7 @@
             <div class="panel-actions">
                 <button id="resume-btn" class="btn btn-primary">▶ Resume</button>
                 <button id="pause-restart-btn" class="btn">↻ Restart</button>
+                <button id="pause-settings-btn" class="btn">⚙ Settings</button>
                 <button id="pause-menu-btn" class="btn">🏠 Menu</button>
             </div>
         </div>
@@ -150,6 +195,7 @@
             var canvas = document.getElementById('canvas');
             var game = new Engine(canvas);
 
+            /* ---------- Resize / orientation ---------- */
             function resizeWindow() {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
@@ -161,18 +207,112 @@
             window.addEventListener('orientationchange', resizeWindow);
             resizeWindow();
 
-            /* ---------- Mobile / touch input ---------- */
-            var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            /* ---------- Settings UI ---------- */
+            var settings = game.getSettings();
+            var sfxToggle = document.getElementById('sfx-toggle');
+            var musicToggle = document.getElementById('music-toggle');
+            var sfxVolume = document.getElementById('sfx-volume');
+            var sfxVolumeLabel = document.getElementById('sfx-volume-label');
+            var musicVolume = document.getElementById('music-volume');
+            var musicVolumeLabel = document.getElementById('music-volume-label');
+            var reducedMotion = document.getElementById('reduced-motion');
+            var showControls = document.getElementById('show-controls');
 
+            function refreshSettingsUI() {
+                settings = game.getSettings();
+                sfxToggle.textContent = settings.sfx ? 'On' : 'Off';
+                sfxToggle.setAttribute('aria-pressed', settings.sfx ? 'true' : 'false');
+                musicToggle.textContent = settings.music ? 'On' : 'Off';
+                musicToggle.setAttribute('aria-pressed', settings.music ? 'true' : 'false');
+                sfxVolume.value = String(Math.round(settings.sfxVolume * 100));
+                sfxVolumeLabel.textContent = sfxVolume.value + '%';
+                musicVolume.value = String(Math.round(settings.musicVolume * 100));
+                musicVolumeLabel.textContent = musicVolume.value + '%';
+                reducedMotion.checked = settings.reducedMotion;
+                showControls.checked = settings.showControls;
+                document.getElementById('controls').style.display = settings.showControls ? 'flex' : 'none';
+                if ((!settings.sfx && !settings.music)) {
+                    document.getElementById('mute-btn').textContent = '🔇';
+                    document.getElementById('mute-btn').title = 'Sound: off';
+                } else {
+                    document.getElementById('mute-btn').textContent = '🔊';
+                    document.getElementById('mute-btn').title = 'Sound: on';
+                }
+            }
+
+            function persistSettings() {
+                settings = {
+                    sfx: sfxToggle.textContent === 'On',
+                    music: musicToggle.textContent === 'On',
+                    sfxVolume: Number(sfxVolume.value) / 100,
+                    musicVolume: Number(musicVolume.value) / 100,
+                    reducedMotion: reducedMotion.checked,
+                    showControls: showControls.checked
+                };
+                game.applySettings(settings);
+                refreshSettingsUI();
+            }
+
+            function openSettings(open) {
+                var el = document.getElementById('settings-screen');
+                game.uiModal = open;
+                if (open) {
+                    refreshSettingsUI();
+                    el.classList.remove('hidden');
+                    el.classList.add('visible');
+                } else {
+                    el.classList.remove('visible');
+                    el.classList.add('hidden');
+                }
+            }
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && document.getElementById('settings-screen').classList.contains('visible')) {
+                    openSettings(false);
+                }
+            });
+
+            sfxToggle.addEventListener('click', function () {
+                sfxToggle.textContent = sfxToggle.textContent === 'On' ? 'Off' : 'On';
+                persistSettings();
+            });
+            musicToggle.addEventListener('click', function () {
+                musicToggle.textContent = musicToggle.textContent === 'On' ? 'Off' : 'On';
+                persistSettings();
+            });
+            sfxVolume.addEventListener('input', function () { sfxVolumeLabel.textContent = sfxVolume.value + '%'; persistSettings(); });
+            musicVolume.addEventListener('input', function () { musicVolumeLabel.textContent = musicVolume.value + '%'; persistSettings(); });
+            reducedMotion.addEventListener('change', persistSettings);
+            showControls.addEventListener('change', persistSettings);
+
+            document.getElementById('start-settings-btn').addEventListener('click', function () { openSettings(true); });
+            document.getElementById('pause-settings-btn').addEventListener('click', function () { openSettings(true); });
+            document.getElementById('settings-save').addEventListener('click', function () {
+                persistSettings();
+                openSettings(false);
+            });
+            document.getElementById('settings-reset').addEventListener('click', function () {
+                game.resetSettings();
+                refreshSettingsUI();
+                persistSettings();
+            });
+
+            /* ---------- Touch / pointer input ---------- */
             function bindHold(el, key) {
                 function down(e) { e.preventDefault(); game.setMove(key, true); }
                 function up(e) { e.preventDefault(); game.setMove(key, false); }
-                el.addEventListener('touchstart', down, { passive: false });
-                el.addEventListener('touchend', up);
-                el.addEventListener('touchcancel', up);
-                el.addEventListener('mousedown', down);
-                el.addEventListener('mouseup', up);
-                el.addEventListener('mouseleave', up);
+                if (window.PointerEvent) {
+                    el.addEventListener('pointerdown', down);
+                    el.addEventListener('pointerup', up);
+                    el.addEventListener('pointercancel', up);
+                    el.addEventListener('pointerleave', up);
+                } else {
+                    el.addEventListener('touchstart', down, { passive: false });
+                    el.addEventListener('touchend', up);
+                    el.addEventListener('touchcancel', up);
+                    el.addEventListener('mousedown', down);
+                    el.addEventListener('mouseup', up);
+                    el.addEventListener('mouseleave', up);
+                }
             }
             bindHold(document.getElementById('btn-left'), 'left');
             bindHold(document.getElementById('btn-right'), 'right');
@@ -181,18 +321,24 @@
             /* ---------- HUD buttons ---------- */
             function toggleFullscreen() {
                 var el = document.documentElement;
-                if (!document.fullscreenElement) {
-                    (el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen).call(el);
-                } else {
-                    (document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen).call(document);
+                var req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+                var exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+                if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                    if (req) req.call(el);
+                } else if (exit) {
+                    exit.call(document);
                 }
             }
             document.getElementById('fullscreen-btn').addEventListener('click', toggleFullscreen);
 
             document.getElementById('mute-btn').addEventListener('click', function () {
-                var muted = game.audio.isMuted();
-                game.audio.setMuted(!muted);
-                this.textContent = game.audio.isMuted() ? '🔇' : '🔊';
+                settings = game.getSettings();
+                if (settings.sfx || settings.music) {
+                    game.applySettings({ sfx: false, music: false });
+                } else {
+                    game.applySettings({ sfx: true, music: true });
+                }
+                refreshSettingsUI();
             });
 
             document.getElementById('pause-btn').addEventListener('click', function () { game.togglePause(); });
@@ -207,20 +353,27 @@
             document.getElementById('again-btn').addEventListener('click', function () { game.restart(); });
             document.getElementById('go-menu-btn').addEventListener('click', function () { game.goToMenu(); });
 
-            /* Show/hide touch controls based on input method */
-            var controls = document.getElementById('controls');
+            /* Show/hide on-screen controls based on input method and preferences. */
+            var wasTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
             document.addEventListener('keydown', function () {
-                if (!isTouch) controls.style.display = 'none';
+                if (game.uiModal) return;
+                document.getElementById('controls').style.display = 'none';
             });
-            document.addEventListener('touchstart', function () {
-                controls.style.display = 'flex';
+            document.addEventListener('pointerdown', function () {
+                var s = game.getSettings();
+                if (s.showControls && (wasTouch || window.PointerEvent)) {
+                    document.getElementById('controls').style.display = 'flex';
+                }
             }, { passive: true });
 
-            if (!isTouch) controls.style.display = 'none';
+            refreshSettingsUI();
+            if (!wasTouch) {
+                document.getElementById('controls').style.display = 'none';
+            }
 
             /* ---------- Load level & start ---------- */
             fetch('level1.json')
-                .then(function (r) { return r.json(); })
+                .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                 .then(function (map) {
                     game.load_map(map);
                     document.getElementById('level-name-text').textContent = map.name || 'Level 1';
@@ -232,13 +385,18 @@
                 })
                 .catch(function (err) {
                     console.error('Failed to load level:', err);
+                    var toast = document.getElementById('toast');
+                    toast.textContent = 'Could not load level. Serve the game over HTTP.';
+                    toast.classList.add('show');
                 });
 
-            /* Tap anywhere on the start overlay to begin */
-            document.getElementById('start-screen').addEventListener('click', function () { game.begin(); });
+            /* Tap anywhere on the start overlay to begin. */
+            document.getElementById('start-screen').addEventListener('click', function (e) {
+                if (!e.target.closest('button')) game.begin();
+            });
 
-            /* ---------- PWA: register the service worker (network-first) ---------- */
-            if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+            /* ---------- PWA: register service worker ---------- */
+            if ('serviceWorker' in navigator && (window.isSecureContext || location.hostname === 'localhost')) {
                 window.addEventListener('load', function () {
                     navigator.serviceWorker.register('sw.js').catch(function (err) {
                         console.warn('Service worker registration failed:', err);

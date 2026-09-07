@@ -1,12 +1,14 @@
 {
     "name": "Green Hills Platformer",
     "short_name": "Green Hills",
-    "description": "A polished, production-ready HTML5 platformer built on a custom canvas engine.",
+    "description": "A polished, dependency-free HTML5 platformer with synthesized audio and offline support.",
     "start_url": ".",
     "display": "fullscreen",
+    "display_override": ["fullscreen", "standalone", "minimal-ui"],
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
     "orientation": "landscape-primary",
+    "categories": ["games", "entertainment"],
     "prefer_related_applications": false,
     "icons": [
         {
