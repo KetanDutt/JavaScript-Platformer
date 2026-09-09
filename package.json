@@ -1,6 +1,6 @@
 {
     "name": "green-hills-platformer",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "A polished, production-ready HTML5 platformer built on a custom dependency-free canvas engine.",
     "private": true,
     "scripts": {
@@ -20,7 +20,10 @@
         "pwa",
         "offline",
         "web-audio",
-        "no-dependencies"
+        "no-dependencies",
+        "achievements",
+        "tween",
+        "juice"
     ],
     "license": "MIT",
     "engines": {

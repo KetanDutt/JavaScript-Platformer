@@ -1,14 +1,19 @@
 /* ============================================================================
  *  Service worker - offline + PWA support.
  *
- *  Strategy: NETWORK-FIRST for HTML and data so players always get fresh
- *  versions, with a cached fallback for offline play. Static assets are also
- *  cached opportunistically so the experience is fast and resilient.
+ *  Strategy
+ *  ---------
+ *  - PRECACHE: install-time cache of all critical static assets.
+ *  - RUNTIME:  network-first for navigations, JSON, and level data so users
+ *              always get fresh content; cache-first for hashed / static
+ *              assets to make repeat loads instant.
+ *  - Old caches are deleted on activation.
  * ============================================================================ */
 
 'use strict';
 
-var CACHE = 'green-hills-v2';
+var CACHE = 'green-hills-v3';
+var RUNTIME_CACHE = 'green-hills-runtime-v3';
 
 var PRECACHE = [
     './',
@@ -36,7 +41,7 @@ self.addEventListener('activate', function (event) {
     event.waitUntil(
         caches.keys().then(function (keys) {
             return Promise.all(keys.map(function (key) {
-                if (key !== CACHE) return caches.delete(key);
+                if (key !== CACHE && key !== RUNTIME_CACHE) return caches.delete(key);
             }));
         }).then(function () {
             return self.clients.claim();
@@ -45,19 +50,25 @@ self.addEventListener('activate', function (event) {
 });
 
 self.addEventListener('fetch', function (event) {
-    if (event.request.method !== 'GET') return;
-
     var request = event.request;
-    var isNavigation = request.mode === 'navigate';
+    if (request.method !== 'GET') return;
 
-    /* Network-first for navigations and JSON data; cache as fallback. */
-    if (isNavigation || /\.(json|html)$/.test(new URL(request.url).pathname)) {
+    var url = new URL(request.url);
+    var sameOrigin = url.origin === self.location.origin;
+    if (!sameOrigin) return;   /* ignore third-party requests */
+
+    var isNavigation = request.mode === 'navigate';
+    var isLevelData = /\.json$/.test(url.pathname);
+    var isHTML = /\.html$/.test(url.pathname) || isNavigation;
+
+    /* Network-first for navigations, HTML, and level data. */
+    if (isNavigation || isLevelData || isHTML) {
         event.respondWith(
             fetch(request)
                 .then(function (response) {
                     if (response && response.ok) {
                         var clone = response.clone();
-                        caches.open(CACHE).then(function (cache) {
+                        caches.open(RUNTIME_CACHE).then(function (cache) {
                             cache.put(request, clone);
                         });
                     }
@@ -79,11 +90,15 @@ self.addEventListener('fetch', function (event) {
             return fetch(request).then(function (response) {
                 if (response && response.ok) {
                     var clone = response.clone();
-                    caches.open(CACHE).then(function (cache) {
+                    caches.open(RUNTIME_CACHE).then(function (cache) {
                         cache.put(request, clone);
                     });
                 }
                 return response;
+            }).catch(function () {
+                /* If the asset is not in the cache and the network is down,
+                   return a tiny 503 so the app can still render. */
+                return new Response('', { status: 503, statusText: 'Offline' });
             });
         })
     );

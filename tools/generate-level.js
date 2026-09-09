@@ -15,7 +15,8 @@
  *    6  spring (bounce)  7  checkpoint        8  goal flag
  *    9  water            10 deco flower       11 start marker
  *    12 crate (solid)    13 enemy (patrol)
- *    14 moving platform  15 heart (life)      16 star (bonus)
+ *    14 moving platform (vertical)
+ *    15 heart (life)     16 star (bonus)      17 moving platform (horizontal)
  * ============================================================================ */
 
 'use strict';
@@ -88,6 +89,8 @@ coinRow(53, 13, 57, 13);
 coinRow(63, 12, 66, 12);
 coinRow(83, 19, 86, 19);
 coinRow(30, 20, 34, 20);
+coinRow(70, 15, 73, 15);
+coinRow(91, 12, 92, 12);
 
 /* ========================================================================
  *  Spike pit (must jump across)
@@ -136,6 +139,11 @@ set(12, HEIGHT - 5, 15);                     /* extra life just after the start 
 set(47, 11, 16);                             /* star reward above the spring ledge */
 set(80, 16, 14);                             /* vertical moving platform near the end */
 set(80, 9, 16);                              /* star reachable from the platform */
+set(94, HEIGHT - 6, 15);                     /* heart at the top of the final stairs */
+set(91, 11, 16);                             /* second star on the final staircase */
+
+/* A horizontal moving platform near the water section. */
+set(65, 18, 17);                              /* (id 17 = horizontal moving platform) */
 
 /* ========================================================================
  *  Start marker & goal flag
@@ -180,7 +188,8 @@ var keys = [
     { "id": 13, "type": "enemy", "dir": 1, "range": 3, "speed": 28, "enemyType": "walker" },
     { "id": 14, "type": "moving", "axis": "y", "range": 4, "speed": 45, "width": 2, "fill": "#8c9eff" },
     { "id": 15, "type": "heart" },
-    { "id": 16, "type": "star" }
+    { "id": 16, "type": "star" },
+    { "id": 17, "type": "moving", "axis": "x", "range": 3, "speed": 40, "width": 2, "fill": "#73c6fa" }
 ];
 
 /* Player start position in tile coordinates. */
@@ -198,11 +207,13 @@ var level = {
     "vel_limit": { "x": 3.0, "y": 13 },
     "movement_speed": { "jump": 6.5, "left": 0.4, "right": 0.4, "air": 0.35 },
     "lives": 3,
+    "max_lives": 5,
     "player": {
         "x": startX + 0.5,
         "y": startY,
         "colour": "#3D5AFE"
     },
+    "par_time": 60,
     "startId": 11
 };
 
