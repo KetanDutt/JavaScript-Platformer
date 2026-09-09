@@ -12,6 +12,7 @@ the generated `level1.json` directly, or (recommended) edit
   "tile_size": 16,
   "lives": 3,
   "max_lives": 5,
+  "par_time": 60,
   "keys": [
     { "id": 0, "type": "empty" },
     { "id": 1, "type": "solid", "fill": "#6bbf4b", "top": "#8fd96a" }
@@ -33,6 +34,8 @@ the generated `level1.json` directly, or (recommended) edit
 - `player.x` / `player.y` are **tile coordinates** (not pixels).
 - Spawn coordinates for entities placed as tiles are also tile coordinates.
 - `max_lives` caps how many lives a heart can restore.
+- `par_time` (optional, seconds) is the target time. The HUD shows it on the
+  win screen and the engine records a best time on a clean run.
 
 ## Tile reference
 
@@ -42,7 +45,7 @@ the generated `level1.json` directly, or (recommended) edit
 | 1  | `solid`      | Grass surface (green top over dirt).                        |
 | 2  | `solid`      | Dirt block.                                                 |
 | 3  | `solid`      | Stone block.                                                |
-| 4  | `coin`       | Collectible (score +100).                                   |
+| 4  | `coin`       | Collectible (score +100 + combo bonus).                     |
 | 5  | `hazard`     | Spikes — touching them kills you.                           |
 | 6  | `spring`     | Bounce pad (`bounce` = launch velocity).                    |
 | 7  | `checkpoint` | Sets the respawn point.                                     |
@@ -52,9 +55,10 @@ the generated `level1.json` directly, or (recommended) edit
 | 11 | `start`      | Start marker (`startId`).                                   |
 | 12 | `solid`      | Crate block.                                                |
 | 13 | `enemy`      | Patrolling enemy; `dir`, `range` (tiles), `speed` (px/s).   |
-| 14 | `moving`     | Moving platform. See options below.                         |
+| 14 | `moving`     | Moving platform (vertical by default). See options below.   |
 | 15 | `heart`      | Restores +1 life (or +250 at max lives).                    |
 | 16 | `star`       | Collectible bonus worth +500.                               |
+| 17 | `moving`     | Horizontal moving platform (alias for tile 14 with `axis="x"`). |
 
 ### Tile key options
 
@@ -132,3 +136,7 @@ writes the JSON to `level1.json`.
   `HEIGHT - 3`, place a walking enemy at `HEIGHT - 4`. Placing it inside the
   solid row removes the ground tile and buries the enemy in a pocket.
 - Move the decoration if it occupies the enemy's new cell.
+- **The level can be shorter than the viewport.** The engine will centre the
+  camera in the world and clamp it so the player always stays visible. Falling
+  out of the world (`player.y > mapHeight + 4 tiles`) triggers a pit-out death
+  with a normal respawn flow.

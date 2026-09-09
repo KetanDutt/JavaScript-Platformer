@@ -51,7 +51,7 @@ function makeCtx() {
             if (prop in obj) return obj[prop];
             if (typeof prop === 'string') {
                 /* gradient objects */
-                if (prop === 'createLinearGradient') {
+                if (prop === 'createLinearGradient' || prop === 'createRadialGradient') {
                     return function () {
                         return { addColorStop: function () {} };
                     };
@@ -316,14 +316,39 @@ try {
     game.audio.setMuted(false);
     assert(!game.audio.isMuted(), 'unmute should be reflected');
 
-    game.applySettings({ sfx: true, music: false, sfxVolume: 0.5, musicVolume: 0.25, reducedMotion: true, showControls: false });
+    game.applySettings({ sfx: true, music: false, sfxVolume: 0.5, musicVolume: 0.25, reducedMotion: true, showControls: false, colorBlind: true, particles: 0.4 });
     var got = game.getSettings();
     assert(got.sfx === true && got.music === false, 'settings should apply');
     assert(Math.abs(got.sfxVolume - 0.5) < 0.001, 'sfx volume should persist in settings');
     assert(got.reducedMotion === true, 'reduced-motion setting should persist');
+    assert(got.colorBlind === true, 'color-blind setting should persist');
+    assert(Math.abs(got.particles - 0.4) < 0.001, 'particle density should persist');
     game.resetSettings();
     got = game.getSettings();
-    assert(got.sfx === true && got.music === true && got.reducedMotion === false, 'settings reset should restore defaults');
+    assert(got.sfx === true && got.music === true && got.reducedMotion === false && got.colorBlind === false, 'settings reset should restore defaults');
+
+    /* Pit death: drop the player far below the level and confirm the engine
+       transitions into the 'lost' state. */
+    game.spawnPlayer(0, game.mapHeight + 100);
+    game.state = 'play';
+    for (var pd = 0; pd < 5; pd++) step(1 / 60);
+    assert(game.state === 'lost' || game.state === 'gameover', 'falling out of the world should kill the player');
+    /* Restore the player so the rest of the test can continue. */
+    game.lives = 3;
+    game.resetToCheckpoint();
+
+    /* Achievements are persisted in localStorage. */
+    game._grantAchievement('first_win');
+    var unlocked = JSON.parse(localStorage.getItem('platformer_achievements') || '[]');
+    assert(unlocked.indexOf('first_win') !== -1, 'achievement should be persisted to localStorage');
+
+    /* Combo system: collect a few coins, verify the combo counter grows. */
+    game.combo = 0;
+    game.comboTimer = 0;
+    game._collectCoin(game.coins[0]);
+    game._collectCoin(game.coins[1]);
+    assert(game.combo === 2, 'combo should grow on each pickup');
+    assert(game.score >= 200 + 10, 'combo should add a small bonus to coin value');
 
     /* Make sure the rAF loop keeps running cleanly after all that */
     for (var f2 = 0; f2 < 30; f2++) step(1 / 60);

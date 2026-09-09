@@ -42,7 +42,7 @@ The engine keeps a single `state` string that gates what updates run:
 | `play`     | Full physics, collisions, camera, HUD, timers.                |
 | `paused`   | Freeze; pause overlay shown.                                  |
 | `lost`     | Death animation; after a delay respawn or game over.          |
-| `won`      | Level complete overlay + confetti + bonus.                    |
+| `won`      | Level complete overlay + confetti + bonus (win slow-mo).      |
 | `gameover` | No lives left overlay.                                        |
 
 ## Physics
@@ -59,6 +59,8 @@ The engine keeps a single `state` string that gates what updates run:
   upward.
 - **Moving platforms**: the player is carried by the platform's per-frame delta
   while standing on it, then re-collides with tiles/platforms each step.
+- **Pit-out death**: if `player.y > mapHeight + 4 * tile_size`, the engine
+  kills the player and routes them through the normal respawn flow.
 
 ### Collision (`_moveX` / `_moveY`)
 
@@ -109,13 +111,14 @@ still keeps the player on-screen.
 
 1. Clear and paint a screen-space sky gradient (cached per viewport height).
 2. Save, `scale(scale)`, translate by `-camera` (+ screen shake offset).
-3. `_drawParallax` — clouds, hills, bushes with parallax offsets.
+3. `_drawParallax` — clouds, hills, bushes, stars with parallax offsets.
 4. `_drawTiles` — when available, draw the **pre-rendered static layer** from
    an offscreen canvas with a visible-range slice; otherwise fall back to live
    tile drawing.
 5. Water ripples, moving platforms, pickups, checkpoints, goal, enemies,
-   player, water highlight, particles, floaters.
+   player motion trail, player, water highlight, ring VFX, particles, popups.
 6. Restore.
+7. (Screen space) Level intro card, vignette, screen flash overlay.
 
 ### Culling
 
@@ -127,13 +130,15 @@ canvas directly, so even large levels stay cheap.
 
 - **Keyboard**: `keydown`/`keyup` map arrow keys, `A`/`D`, `W`/`Space` to
   `left` / `right` / `jump` via `_setInput`. Key repeat is harmless because we
-  only track booleans.
+  only track booleans. `M` toggles mute; `F` toggles fullscreen; `Esc` toggles
+  pause.
 - **Touch/on-screen**: `setMove('left', true)` etc. are wired to the DOM buttons
   in `index.html`. Pointer events are used when available for multi-touch
   friendliness.
 - **Gamepad**: `_updateGamepad()` polls `navigator.getGamepads()` and maps the
   left stick/D-pad, face buttons, and Start-to-pause into the same input
-  abstractions.
+  abstractions. The pause and jump buttons are debounced so a held press
+  doesn't re-trigger.
 - **Input method detection**: the HUD hides the touch controls when a keyboard
   is used and shows them on touch devices / gamepads (if enabled in Settings).
 
@@ -142,22 +147,34 @@ canvas directly, so even large levels stay cheap.
 `AudioFX` lazily creates a single `AudioContext` on the first user gesture (to
 satisfy browser autoplay policies). It exposes separate **SFX** and **music**
 gain buses so the two can be toggled and volume-controlled independently.
+A third "duck" bus briefly dips the music on big SFX so pickup / jump sounds
+punch through.
 
 All sounds are synthesized (`tone`, `noise`) — **no audio files**. A
-look-ahead scheduler plays a looping chiptune melody + bass that can be muted.
+look-ahead scheduler plays a looping chiptune melody + bass + percussion
+sub-pattern that can be muted.
 
 ## Effects
 
-- **Particles** — a capped pool of circles/rects with velocity, gravity and
-  life. Spawned on jump, land, run, coin, heart, star, stomp, spring, death,
-  water entry, and win.
-- **Floaters** — world-space text popups (e.g. `+100`, `+500`, `+1 LIFE`).
+- **Particles** — a capped pool of circles/rects/stars with velocity, gravity
+  and life. Spawned on jump, land, run, coin, heart, star, stomp, spring,
+  death, water entry, and win. Density is user-controlled in Settings.
+- **Floaters** — world-space text popups (e.g. `+100`, `+500`, `+1 LIFE`) that
+  pop in with a scale tween and float upward.
 - **Tweens** — a minimal tween registry (`tween`, `_updateTweens`) with easing,
-  `onUpdate`, and `onComplete`. Used for the score count-up reveal.
+  `onUpdate`, and `onComplete`. Used for the score count-up reveal and the
+  floater pop-in.
+- **Rings** — expanding circles around pickups, checkpoints, spring pads, and
+  the goal. Quick feedback for "you got it".
 - **Screen shake** — `_shake(duration, magnitude)`; applied as a random offset
   while `shake.t > 0`. Disabled by reduced-motion settings.
+- **Screen flash** — full-screen tint on big moments (start, death, checkpoint).
 - **Squash & stretch** — the player's `squash` value expands on jump and
   contracts on land, then eases back to 1.
+- **Player motion trail** — a small ring buffer of past positions rendered as
+  fading discs when the player is moving fast in the air.
+- **Win slow-mo** — the first half-second of the win screen is a 40% time scale
+  for a dramatic finish.
 
 ## Settings
 
@@ -167,6 +184,15 @@ The engine stores and applies a lightweight settings object:
 - `sfxVolume` / `musicVolume` (0–1)
 - `reducedMotion`
 - `showControls`
+- `colorBlind` (placeholder — used for shape-based pickup hints)
+- `particles` (0..1, multiplies all spawn counts)
 
 Settings persist to `localStorage` through `Engine.prototype.applySettings` and
 are read at construction time. `resetSettings()` restores defaults.
+
+## Pit-out safety
+
+The player can walk off the edge of any platform that doesn't have a solid
+backstop. After the last solid tile under the player, gravity pulls them down
+past `mapHeight + 4 * tile_size` and `_checkPit()` triggers a normal death +
+respawn cycle, so the player can never silently fall into the void.

@@ -2,14 +2,15 @@
 
 A **polished, production-ready** platformer built from scratch on a custom,
 **dependency-free** HTML5 Canvas engine. No frameworks, no build step, no
-external assets — everything (art, physics, effects, sound) is generated in
-code, so it runs anywhere a browser runs.
+external assets — everything (art, physics, effects, sound, music) is
+generated in code, so it runs anywhere a browser runs.
 
 <p align="center">
   <em>Collect coins, hearts and stars. Stomp enemies, ride springs, surf
   moving platforms, swim through low-gravity water, and reach the goal flag —
-  with juicy particles, screen shake, synthesized SFX and a chiptune
-  soundtrack.</em>
+  with juicy particles, screen shake, synthesized SFX, a chiptune soundtrack,
+  achievements, a level intro card, and a pit-out death for fair
+  platforming.</em>
 </p>
 
 ## ✨ Features
@@ -17,37 +18,57 @@ code, so it runs anywhere a browser runs.
 - **Smooth, frame-rate independent physics** — fixed-timestep simulation with
   a rendering accumulator for buttery motion on any display.
 - **Tight, responsive controls** — coyote time, jump buffering and
-  variable-height jumps (hold to jump higher).
+  variable-height jumps (hold to jump higher), with debounced gamepad support.
 - **Robust AABB collision** — clean axis-separated resolution, spring pads,
-  spikes, water zones, and **moving platforms** that carry the player.
+  spikes, water zones, **moving platforms** that carry the player, and a
+  **pit-out death** when the player falls off the world.
 - **Gameplay**:
-  - Coin pickups (+100), **hearts** (+1 life), **stars** (+500 bonus)
+  - Coin pickups (+100 + combo bonus), **hearts** (+1 life), **stars**
+    (+500 + combo bonus)
+  - **Combo multiplier** — chain pickups for extra points and a "ping"
   - Stompable patrolling enemies
   - Checkpoints, spring bounce pads, spike hazards, water
   - Goal flag + `+500` level-complete bonus
 - **Juice & polish**:
-  - Squash & stretch on jump/land
+  - Squash & stretch on jump/land + blinking eyes + mouth that adapts to
+    speed + motion trail in the air
   - Particle effects (jump, landing, run dust, coin/heart/star, stomp, spring,
     death, water splash, win confetti)
+  - **Expanding ring VFX** on pickups, checkpoints, and the goal
   - World-space score popups and animated pickups
-  - Player-centered camera that adapts to the browser window size (world-space
-    viewport math), with smooth look-ahead + screen shake
-  - Parallax sky, clouds, hills and bushes
+  - Player-centered camera with smooth look-ahead + screen shake + screen
+    flash on start / checkpoint / death
+  - Parallax sky, drifting clouds, hills and bushes
   - Animated coins, stars, hearts, flags, enemies and moving platforms
   - Tween-based HUD score count-up and animated water ripples
+  - **Level intro card** that slides in on game start
+  - **Vignette** for a subtle cinematic frame
+  - **Combo HUD chip** that lights up when chaining pickups
 - **Audio** — synthesized Web Audio SFX (jump, coin, heart, star, stomp,
-  spring, hit, splash, death, win, checkpoint, UI) plus a looping chiptune
-  soundtrack, with **independent SFX/music volume**. Zero audio files.
-- **Full game UI** — HUD (score/coins/stars/lives/timer/best), start screen,
-  settings, pause menu, win screen, game-over screen and toast notifications.
-- **Input** — keyboard (arrows / WASD / space), touch on-screen controls, and
-  **gamepad support** via the Web Gamepad API.
+  spring, hit, splash, death, win, checkpoint, UI, combo, whoosh) plus a
+  looping chiptune soundtrack with melody, bass, and percussion, and
+  music-ducking on big SFX. Independent SFX/music volume. Zero audio files.
+- **Persistent state**:
+  - Best score
+  - Best time (per `par_time` target)
+  - Settings (sfx, music, volumes, reduced motion, particle density, color
+    blind mode, on-screen controls)
+  - Achievements
+- **Full game UI** — HUD (score/coins/stars/lives/timer/best/combo), start
+  screen, settings, pause menu, win screen (with par-time and best-time
+  displays), game-over screen and toast notifications.
+- **Input** — keyboard (arrows / WASD / space / Esc / M / F), touch on-screen
+  controls, and **gamepad support** via the Web Gamepad API (with debounced
+  start-to-pause and jump).
 - **Accessibility** — `prefers-reduced-motion` support through both CSS and a
-  built-in reduced-motion setting.
-- **Performance** — static tile layer is pre-rendered to an offscreen canvas,
-  visible-tile culling, capped particle pool and cached sky gradient.
+  built-in reduced-motion setting, `prefers-contrast: more` for stronger
+  focus outlines, auto-pause on tab visibility loss, and color-blind mode.
+- **Performance** — static tile layer pre-rendered to an offscreen canvas,
+  visible-tile culling, capped particle pool, cached sky gradient, win
+  slow-mo.
 - **PWA-ready** — manifest, theme color, app icons and an offline service
-  worker so the game installs to a home screen and works without a connection.
+  worker with network-first caching so the game installs to a home screen and
+  works without a connection.
 
 ## 🚀 Getting started
 
@@ -79,9 +100,9 @@ python3 -m http.server 8080
 | Move left/right        | `←` / `→` or `A` / `D`          | ◀ / ▶ buttons     | D-pad / left stick   |
 | Jump (hold = higher)   | `↑` / `Space` / `W`             | ▲ button          | A / B / X / Y        |
 | Pause                  | `Esc`                           | ⏸ button          | Start                |
-| Restart                | ↻ button                        | ↻ button          | —                    |
-| Fullscreen             | ⛶ button                        | ⛶ button          | —                    |
-| Mute                   | 🔊 button                        | 🔊 button          | —                    |
+| Mute / unmute          | `M`                             | 🔊 button          | —                    |
+| Fullscreen             | `F`                             | ⛶ button          | —                    |
+| Restart                | ↻ button                         | ↻ button          | —                    |
 
 Touch controls appear automatically on touch devices and can be toggled in
 Settings.
@@ -128,23 +149,25 @@ npm run validate
 ```
 
 The smoke test stubs the browser environment, loads the level, simulates play,
-and asserts: the engine never throws, physics stay finite, the player can move,
-hearts/stars/moving platforms work, death/respawn works, the goal triggers a
-win with the level-complete bonus, and the settings API behaves.
+and asserts: the engine never throws, physics stay finite, the player can
+move, hearts/stars/moving platforms work, death/respawn works, the goal
+triggers a win with the level-complete bonus, **pit-out death** kills the
+player, **combo bonuses** stack, and the settings API behaves.
 
 ## 🗺 Authoring a level
 
 Levels are plain JSON. See [`docs/LEVEL_AUTHORING.md`](docs/LEVEL_AUTHORING.md)
-for the tile reference, physics options and examples. The bundled
-`tools/generate-level.js` shows a comfortable way to author a level with helper
-functions instead of writing big JSON arrays by hand.
+for the tile reference, physics options, the optional `par_time` field, and
+examples. The bundled `tools/generate-level.js` shows a comfortable way to
+author a level with helper functions instead of writing big JSON arrays by
+hand.
 
 ## 📚 Documentation
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — how the engine works
 - [`docs/LEVEL_AUTHORING.md`](docs/LEVEL_AUTHORING.md) — tile reference +
   how to build/modify levels
-- [`docs/GAMEPLAY.md`](docs/GAMEPLAY.md) — mechanics, scoring, difficulty
+- [`docs/GAMEPLAY.md`](docs/GAMEPLAY.md) — mechanics, scoring, combos
 - [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) — how to contribute
 - [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) — performance strategy
 - [`docs/ACCESSIBILITY.md`](docs/ACCESSIBILITY.md) — accessibility

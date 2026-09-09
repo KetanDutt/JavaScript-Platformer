@@ -25,6 +25,11 @@
 <body>
     <canvas id="canvas"></canvas>
 
+    <!-- ============ Progress bar ============ -->
+    <div id="progress" aria-hidden="true">
+        <div id="progress-fill"></div>
+    </div>
+
     <!-- ============ HUD ============ -->
     <div id="hud" aria-label="Game HUD">
         <div class="hud-group hud-left">
@@ -44,6 +49,10 @@
                 <span class="hud-icon">❤️</span>
                 <span id="lives" class="hud-value">3</span>
             </div>
+            <div id="combo-chip" class="hud-chip hud-combo" style="display:none" title="Combo multiplier">
+                <span class="hud-icon">🔥</span>
+                <span id="combo" class="hud-value">x1</span>
+            </div>
         </div>
 
         <div class="hud-group hud-center">
@@ -58,12 +67,16 @@
                 <span class="hud-icon">🏆</span>
                 <span id="best" class="hud-value">0</span>
             </div>
+            <div id="best-time-chip" class="hud-chip hud-best-time" title="Best time" style="display:none">
+                <span class="hud-icon">⏳</span>
+                <span id="best-time" class="hud-value">0:00</span>
+            </div>
         </div>
 
         <div class="hud-group hud-right">
-            <button id="fullscreen-btn" class="icon-btn" aria-label="Toggle fullscreen" title="Fullscreen">⛶</button>
-            <button id="mute-btn" class="icon-btn" aria-label="Toggle sound" title="Sound: on">🔊</button>
-            <button id="pause-btn" class="icon-btn" aria-label="Pause" title="Pause">⏸</button>
+            <button id="fullscreen-btn" class="icon-btn" aria-label="Toggle fullscreen" title="Fullscreen (F)">⛶</button>
+            <button id="mute-btn" class="icon-btn" aria-label="Toggle sound" title="Mute (M)">🔊</button>
+            <button id="pause-btn" class="icon-btn" aria-label="Pause" title="Pause (Esc)">⏸</button>
             <button id="restart-btn" class="icon-btn" aria-label="Restart" title="Restart">↻</button>
         </div>
     </div>
@@ -90,7 +103,7 @@
             <div class="controls-help">
                 <div class="help-row"><kbd>◀</kbd><kbd>▶</kbd> Move</div>
                 <div class="help-row"><kbd>▲</kbd> / <kbd>Space</kbd> Jump (hold for higher)</div>
-                <div class="help-row"><kbd>Esc</kbd> Pause</div>
+                <div class="help-row"><kbd>Esc</kbd> Pause &nbsp; <kbd>M</kbd> Mute &nbsp; <kbd>F</kbd> Fullscreen</div>
                 <div class="help-row">🎮 Gamepad supported</div>
                 <div class="help-row">Touch controls on mobile 📱</div>
             </div>
@@ -125,6 +138,11 @@
                     <input id="music-volume" type="range" min="0" max="100" step="1" value="60" aria-label="Music volume">
                     <output id="music-volume-label">60%</output>
                 </label>
+                <label class="setting-slider">
+                    <span>Particle density</span>
+                    <input id="particles" type="range" min="0" max="100" step="1" value="100" aria-label="Particle density">
+                    <output id="particles-label">100%</output>
+                </label>
                 <label class="setting-check">
                     <input id="reduced-motion" type="checkbox">
                     <span>Reduced motion (fewer shakes &amp; particles)</span>
@@ -132,6 +150,10 @@
                 <label class="setting-check">
                     <input id="show-controls" type="checkbox">
                     <span>Show on-screen controls</span>
+                </label>
+                <label class="setting-check">
+                    <input id="color-blind" type="checkbox">
+                    <span>Color-blind friendly (larger pickable shapes)</span>
                 </label>
             </div>
             <div class="panel-actions">
@@ -162,7 +184,9 @@
             <div class="stats-grid">
                 <div class="stat"><span class="stat-label">Score</span><span id="win-score" class="stat-value">0</span></div>
                 <div class="stat"><span class="stat-label">Coins</span><span id="win-coins" class="stat-value">0 / 0</span></div>
+                <div class="stat"><span class="stat-label">Stars</span><span id="win-stars" class="stat-value">0 / 0</span></div>
                 <div class="stat"><span class="stat-label">Time</span><span id="win-time" class="stat-value">0:00</span></div>
+                <div class="stat"><span class="stat-label">Best Time</span><span id="win-par" class="stat-value">—</span></div>
                 <div class="stat"><span class="stat-label">Best</span><span id="win-best" class="stat-value">0</span></div>
             </div>
             <div class="panel-actions">
@@ -179,6 +203,8 @@
             <div class="stats-grid">
                 <div class="stat"><span class="stat-label">Score</span><span id="final-score" class="stat-value">0</span></div>
                 <div class="stat"><span class="stat-label">Coins</span><span id="final-coins" class="stat-value">0 / 0</span></div>
+                <div class="stat"><span class="stat-label">Stars</span><span id="final-stars" class="stat-value">0 / 0</span></div>
+                <div class="stat"><span class="stat-label">Time</span><span id="final-time" class="stat-value">0:00</span></div>
             </div>
             <div class="panel-actions">
                 <button id="again-btn" class="btn btn-primary">↻ Try Again</button>
@@ -215,8 +241,11 @@
             var sfxVolumeLabel = document.getElementById('sfx-volume-label');
             var musicVolume = document.getElementById('music-volume');
             var musicVolumeLabel = document.getElementById('music-volume-label');
+            var particles = document.getElementById('particles');
+            var particlesLabel = document.getElementById('particles-label');
             var reducedMotion = document.getElementById('reduced-motion');
             var showControls = document.getElementById('show-controls');
+            var colorBlind = document.getElementById('color-blind');
 
             function refreshSettingsUI() {
                 settings = game.getSettings();
@@ -228,8 +257,11 @@
                 sfxVolumeLabel.textContent = sfxVolume.value + '%';
                 musicVolume.value = String(Math.round(settings.musicVolume * 100));
                 musicVolumeLabel.textContent = musicVolume.value + '%';
+                particles.value = String(Math.round((settings.particles || 1) * 100));
+                particlesLabel.textContent = particles.value + '%';
                 reducedMotion.checked = settings.reducedMotion;
                 showControls.checked = settings.showControls;
+                colorBlind.checked = settings.colorBlind;
                 document.getElementById('controls').style.display = settings.showControls ? 'flex' : 'none';
                 if ((!settings.sfx && !settings.music)) {
                     document.getElementById('mute-btn').textContent = '🔇';
@@ -246,8 +278,10 @@
                     music: musicToggle.textContent === 'On',
                     sfxVolume: Number(sfxVolume.value) / 100,
                     musicVolume: Number(musicVolume.value) / 100,
+                    particles: Number(particles.value) / 100,
                     reducedMotion: reducedMotion.checked,
-                    showControls: showControls.checked
+                    showControls: showControls.checked,
+                    colorBlind: colorBlind.checked
                 };
                 game.applySettings(settings);
                 refreshSettingsUI();
@@ -281,8 +315,10 @@
             });
             sfxVolume.addEventListener('input', function () { sfxVolumeLabel.textContent = sfxVolume.value + '%'; persistSettings(); });
             musicVolume.addEventListener('input', function () { musicVolumeLabel.textContent = musicVolume.value + '%'; persistSettings(); });
+            particles.addEventListener('input', function () { particlesLabel.textContent = particles.value + '%'; persistSettings(); });
             reducedMotion.addEventListener('change', persistSettings);
             showControls.addEventListener('change', persistSettings);
+            colorBlind.addEventListener('change', persistSettings);
 
             document.getElementById('start-settings-btn').addEventListener('click', function () { openSettings(true); });
             document.getElementById('pause-settings-btn').addEventListener('click', function () { openSettings(true); });
@@ -372,6 +408,12 @@
             }
 
             /* ---------- Load level & start ---------- */
+            function showError(msg) {
+                var toast = document.getElementById('toast');
+                toast.textContent = msg;
+                toast.classList.add('show');
+            }
+
             fetch('level1.json')
                 .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
                 .then(function (map) {
@@ -381,13 +423,15 @@
                         document.getElementById('best-chip').style.display = 'flex';
                         document.getElementById('best').textContent = String(game.maxScore);
                     }
+                    if (game.bestTime > 0) {
+                        document.getElementById('best-time-chip').style.display = 'flex';
+                        document.getElementById('best-time').textContent = game._formatTime(game.bestTime);
+                    }
                     game.start();
                 })
                 .catch(function (err) {
                     console.error('Failed to load level:', err);
-                    var toast = document.getElementById('toast');
-                    toast.textContent = 'Could not load level. Serve the game over HTTP.';
-                    toast.classList.add('show');
+                    showError('Could not load level. Serve the game over HTTP.');
                 });
 
             /* Tap anywhere on the start overlay to begin. */

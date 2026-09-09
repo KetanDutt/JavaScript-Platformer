@@ -22,8 +22,8 @@ unavailable.
 
 ## Culling
 
-- Tiles, water ripples, background features, and parallax elements are culled to
-  the visible range.
+- Tiles, water ripples, background features, and parallax elements are culled
+  to the visible range.
 - Moving entities (platforms, pickups, enemies) are only drawn if they exist;
   collected pickups are skipped.
 
@@ -31,27 +31,37 @@ unavailable.
 
 The particle list is capped (`Particles.max = 1400`). When the cap is reached,
 new spawns are throttled rather than growing unbounded. Reduced-motion mode
-also cuts particle counts in half.
+also cuts particle counts in half. The Settings panel exposes a `particles`
+slider that scales all spawn counts in real time, so a low-end device can
+opt-in to a much cheaper experience without losing gameplay.
 
 ## Allocation reduction
 
 - The sky gradient is cached per viewport height.
-- Particles/floaters use simple arrays with in-place updates; only a few small
-  objects are created per spawn.
+- Particles/floaters/rings use simple arrays with in-place updates; only a few
+  small objects are created per spawn.
 - DOM HUD updates are kept minimal (timer text updates each step, but the DOM
   is tiny).
+- The level's static layer is built once per level load and re-used.
 
-## Reduced motion
+## Win slow-mo + reduced motion
 
 The engine has a `reducedMotion` setting (also honored via the CSS
 `prefers-reduced-motion` media query). When enabled:
 
 - screen shake is skipped,
-- confetti is skipped,
+- win confetti is skipped,
 - particle counts for big bursts are reduced,
-- CSS animations/transitions are disabled for UI.
+- CSS animations/transitions are disabled for UI,
+- win slow-mo is disabled.
 
 This improves both accessibility and performance for users who opt in.
+
+## Gamepad polling
+
+`_updateGamepad()` is called every physics step (60 Hz) and short-circuits as
+soon as it sees no gamepads. It also debounces the Start and jump buttons
+internally so a held press never repeats.
 
 ## Measuring
 
@@ -68,3 +78,4 @@ playing. The main bottlenecks to watch are:
 - Grid-space platform updates to skip platforms far off screen.
 - An SVG/mask-free "draw only dirty camera tiles" mode for extremely large
   worlds.
+- Web Worker physics for very large levels.
