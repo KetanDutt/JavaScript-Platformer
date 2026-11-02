@@ -1387,7 +1387,7 @@
             this._unlockedAchievements = JSON.stringify(list);
             saveStorage('platformer_achievements', this._unlockedAchievements);
             var def = ACHIEVEMENTS[id];
-            if (def) this._toast('🏆 ' + def.name);
+            if (def) this._toast('Achievement: ' + def.name);
             this.audio.unlock();
         } catch (e) { /* ignore */ }
     };
@@ -1466,7 +1466,12 @@
         var comboEl = document.getElementById('combo');
         var comboChip = document.getElementById('combo-chip');
         if (comboEl) comboEl.textContent = 'x' + Math.max(1, this.combo);
-        if (comboChip) comboChip.style.display = (this.combo > 1) ? 'flex' : 'none';
+        if (comboChip) {
+            var on = this.combo > 1;
+            comboChip.style.display = on ? 'flex' : 'none';
+            if (on) comboChip.classList.add('hud-combo--on');
+            else comboChip.classList.remove('hud-combo--on');
+        }
     };
 
     Engine.prototype._refreshBestHud = function () {
