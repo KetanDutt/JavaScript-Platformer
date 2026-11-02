@@ -431,6 +431,14 @@ h2 {
 .win-title { color: var(--color-primary); }
 .gameover-title { color: var(--color-error); }
 
+.new-best {
+    margin: 0 0 10px;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--color-success);
+    letter-spacing: 0.2px;
+}
+
 .controls-help {
     display: grid;
     gap: 8px;
