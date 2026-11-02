@@ -370,7 +370,7 @@
 
     AudioFX.prototype.whoosh = function () {
         var self = this;
-        if (!this.ctx) return;
+        if (!this.ensure()) return;
         var t = this.ctx.currentTime;
         var o = this.ctx.createOscillator();
         var g = this.ctx.createGain();
@@ -623,9 +623,7 @@
         this.goal = null;
         this.respawn = { x: 0, y: 0 };
         this._startSpot = null;
-        this.rings = [];
-
-        /* Ring buffer of "ring" VFX for pickups and checkpoints. */
+        /* Ring buffer of expanding ring VFX for pickups and checkpoints. */
         this.rings = [];
 
         this.score = 0;
@@ -655,6 +653,7 @@
         this.staticLayer = null;
         this._skyGradient = null;
         this._skyGradientHeight = -1;
+        this._scaleCache = null;
         this._gamepadIndex = null;
         this._gamepadPauseLatched = false;
         this._gamepadJumpLatched = false;
@@ -783,6 +782,7 @@
         /* Recenter the camera so the player stays visible on resize orientation changes. */
         this._centerCameraOnPlayer(true);
         this._skyGradient = null;
+        this._scaleCache = null;
     };
 
     Engine.prototype._bindInput = function () {
@@ -1237,8 +1237,12 @@
         if (this.state !== 'play') return;
         this.state = 'lost';
         this.player.alive = false;
+        /* A death breaks the player's momentum — drop the active combo. */
+        this.combo = 0;
+        this.comboTimer = 0;
         this.audio.death();
         this._shake(0.5, 9);
+        this._rumble(240, 0.8);
         this._doScreenFlash(0.18, '#ff5a5a');
         this._burst(this.player.x + this.player.w / 2, this.player.y + this.player.h / 2, {
             count: 32, colour: '#ff5a5a', speedMin: 2, speedMax: 6, life: 0.7, gravity: 0.1, shape: 'rect'
@@ -1270,6 +1274,8 @@
         if (isNewBest) this._toast('New best score!');
         this._refreshBestHud();
         this._refreshBestTime();
+        var nb = document.getElementById('win-newbest');
+        if (nb) nb.style.display = isNewBest ? 'block' : 'none';
         this._show('win-screen');
         this._countUp('win-score', Math.max(0, this.score - 500), this.score);
         this._fill('win-coins', this.coinsCollected + ' / ' + this.coinsTotal);
@@ -1362,6 +1368,8 @@
         var points = 250;
         this.score += points;
         this.audio.stomp();
+        this._shake(0.15, 4);
+        this._rumble(100, 0.5);
         this._burst(enemy.x + enemy.w / 2, enemy.y + enemy.h / 2, {
             count: 18, colour: '#9b6bff', speedMin: 1.5, speedMax: 4, life: 0.6, gravity: 0.12
         });
@@ -1387,7 +1395,7 @@
             this._unlockedAchievements = JSON.stringify(list);
             saveStorage('platformer_achievements', this._unlockedAchievements);
             var def = ACHIEVEMENTS[id];
-            if (def) this._toast('🏆 ' + def.name);
+            if (def) this._toast('Achievement: ' + def.name);
             this.audio.unlock();
         } catch (e) { /* ignore */ }
     };
@@ -1466,7 +1474,12 @@
         var comboEl = document.getElementById('combo');
         var comboChip = document.getElementById('combo-chip');
         if (comboEl) comboEl.textContent = 'x' + Math.max(1, this.combo);
-        if (comboChip) comboChip.style.display = (this.combo > 1) ? 'flex' : 'none';
+        if (comboChip) {
+            var on = this.combo > 1;
+            comboChip.style.display = on ? 'flex' : 'none';
+            if (on) comboChip.classList.add('hud-combo--on');
+            else comboChip.classList.remove('hud-combo--on');
+        }
     };
 
     Engine.prototype._refreshBestHud = function () {
@@ -1703,6 +1716,7 @@
             p.groundPlatform = null;
             p.squash = 1.3;
             this.audio.jump();
+            this._rumble(60, 0.25);
             this._burst(p.x + p.w / 2, p.y + p.h, {
                 count: 8, colour: 'rgba(255,255,255,0.7)', speedMin: 0.5, speedMax: 2, life: 0.3, gravity: -0.01
             });
@@ -2037,15 +2051,39 @@
         this.shake = { t: dur, dur: dur, mag: mag, ox: 0, oy: 0 };
     };
 
+    /* Light gamepad rumble for big moments. Silent on browsers without haptics. */
+    Engine.prototype._rumble = function (duration, strength) {
+        if (this.reducedMotion) return;
+        var nav = global.navigator;
+        if (!nav || !nav.getGamepads) return;
+        var pads = nav.getGamepads();
+        if (!pads || !pads.length) return;
+        var pad = pads[0] || pads[1] || null;
+        if (!pad || !pad.connected) return;
+        var actuator = pad.vibrationActuator;
+        if (!actuator) return;
+        /* playEffect may throw on some browsers; haptics are a bonus, never fatal. */
+        try {
+            actuator.playEffect('dual-rumble', {
+                startDelay: 0,
+                duration: duration || 120,
+                strongMagnitude: strength || 0.6,
+                weakMagnitude: strength * 0.6 || 0.36
+            });
+        } catch (e) { /* haptics unavailable */ }
+    };
+
     Engine.prototype._doScreenFlash = function (dur, colour) {
         this._screenFlash = { t: dur, dur: dur, colour: colour || '#ffffff' };
     };
 
     Engine.prototype._worldScale = function () {
+        if (this._scaleCache != null) return this._scaleCache;
         if (!this.canvas || !this.canvas.height) return 1;
         var visibleTilesY = 18;
         var s = this.canvas.height / (visibleTilesY * this.tile_size);
-        return clamp(s, 0.6, 5);
+        this._scaleCache = clamp(s, 0.6, 5);
+        return this._scaleCache;
     };
 
     /* ==========================================================================
@@ -2189,7 +2227,7 @@
         ctx.font = 'bold 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(name.toUpperCase(), 0, 0);
+        ctx.fillText(name, 0, 0);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
         ctx.font = '12px -apple-system, sans-serif';
         ctx.fillText(this.coinsTotal + ' coins  •  ' + this.starsTotal + ' stars', 0, 22);
@@ -2658,6 +2696,16 @@
             ctx.arc(eo, 2, 1.6, 0, Math.PI, false);
         }
         ctx.stroke();
+        /* Coyote-time indicator: a small pulsing ring under the player while a
+           late jump is still possible after leaving a ledge. */
+        if (p.coyote > 0 && !this.reducedMotion) {
+            var pulse = 0.5 + 0.5 * Math.sin(p._animTime * 8);
+            ctx.strokeStyle = 'rgba(255, 255, 255, ' + 0.5 * pulse + ')';
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.arc(0, p.h * 0.62 + 4, 4 + 1.5 * pulse, 0, TAU);
+            ctx.stroke();
+        }
         ctx.restore();
 
         p.squash = approach(p.squash, 1, 0.12);

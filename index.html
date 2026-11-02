@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="description" content="Green Hills — a polished, dependency-free HTML5 platformer with cinematics, effects and synthesized audio.">
-    <meta name="theme-color" content="#0175C2">
+    <meta name="theme-color" content="#357a50">
 
     <!-- iOS PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -33,24 +33,24 @@
     <!-- ============ HUD ============ -->
     <div id="hud" aria-label="Game HUD">
         <div class="hud-group hud-left">
-            <div class="hud-chip">
-                <span class="hud-icon">★</span>
+            <div class="hud-chip" title="Score">
+                <span class="hud-icon" aria-cb-shape="★"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.5 9.5 11 1.5-8 8 1.5 11-9.5-5-9.5 5 1.5-11-8-8 11-1.5z"/></svg></span>
                 <span id="score" class="hud-value">0</span>
             </div>
-            <div class="hud-chip">
-                <span class="hud-icon">🪙</span>
+            <div class="hud-chip" title="Coins">
+                <span class="hud-icon" aria-cb-shape="●"><svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg></span>
                 <span id="coins" class="hud-value">0 / 0</span>
             </div>
-            <div class="hud-chip">
-                <span class="hud-icon">💫</span>
+            <div class="hud-chip" title="Stars">
+                <span class="hud-icon" aria-cb-shape="✦"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2 7 7 1-5 5 1 7-7-3-7 3 1-7-5-5 2-7z"/></svg></span>
                 <span id="stars" class="hud-value">0 / 0</span>
             </div>
             <div class="hud-chip" title="Lives">
-                <span class="hud-icon">❤️</span>
+                <span class="hud-icon" aria-cb-shape="♥"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>
                 <span id="lives" class="hud-value">3</span>
             </div>
             <div id="combo-chip" class="hud-chip hud-combo" style="display:none" title="Combo multiplier">
-                <span class="hud-icon">🔥</span>
+                <span class="hud-icon" aria-cb-shape="⚡"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2l-5 12 4 0-4 10 6-12-4 0 4-10z"/></svg></span>
                 <span id="combo" class="hud-value">x1</span>
             </div>
         </div>
@@ -59,36 +59,50 @@
             <div id="level-name" class="hud-chip hud-level-name">
                 <span id="level-name-text">Green Hills</span>
             </div>
-            <div class="hud-chip">
-                <span class="hud-icon">⏱</span>
+            <div class="hud-chip" title="Time">
+                <span class="hud-icon"><svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 12l2.5-4"/><circle cx="12" cy="12" r="1" style="stroke-width:1.8"/></svg></span>
                 <span id="timer" class="hud-value">0:00</span>
             </div>
             <div id="best-chip" class="hud-chip hud-best" title="Best score" style="display:none">
-                <span class="hud-icon">🏆</span>
+                <span class="hud-icon"><svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l-2 4H6l2 4-1 4h4l-1 4 3-2 3 2-1-4h4l-1-4-2-4H14l-2-4z"/></svg></span>
                 <span id="best" class="hud-value">0</span>
             </div>
             <div id="best-time-chip" class="hud-chip hud-best-time" title="Best time" style="display:none">
-                <span class="hud-icon">⏳</span>
+                <span class="hud-icon"><svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v4l3 2"/><circle cx="12" cy="12" r="1" style="stroke-width:1.8"/></svg></span>
                 <span id="best-time" class="hud-value">0:00</span>
             </div>
         </div>
 
         <div class="hud-group hud-right">
-            <button id="fullscreen-btn" class="icon-btn" aria-label="Toggle fullscreen" title="Fullscreen (F)">⛶</button>
-            <button id="mute-btn" class="icon-btn" aria-label="Toggle sound" title="Mute (M)">🔊</button>
-            <button id="pause-btn" class="icon-btn" aria-label="Pause" title="Pause (Esc)">⏸</button>
-            <button id="restart-btn" class="icon-btn" aria-label="Restart" title="Restart">↻</button>
+            <button id="fullscreen-btn" class="icon-btn" aria-label="Toggle fullscreen" title="Fullscreen (F)">
+                <svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M21 3h-5v5M3 21h5v-5M21 21h-5v-5"/></svg>
+            </button>
+            <button id="mute-btn" class="icon-btn" aria-label="Toggle sound" title="Mute (M)">
+                <svg class="icon icon-lg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h5l5 6V3L8 9z"/><circle cx="14" cy="12" r="1"/><path style="fill:none;stroke:currentColor;stroke-width:2" d="M16.5 12a4.5 4.5 0 0 1 0 9"/></svg>
+            </button>
+            <button id="pause-btn" class="icon-btn" aria-label="Pause" title="Pause (Esc)">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="10" y="7" width="3" height="10"/><rect x="15" y="7" width="3" height="10"/></svg>
+            </button>
+            <button id="restart-btn" class="icon-btn" aria-label="Restart" title="Restart">
+                <svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M23 4v3h-3M23 4c0 5-5 9-9 9M3 4v3h3M3 4c0 5 5 9 9 9"/></svg>
+            </button>
         </div>
     </div>
 
     <!-- ============ Mobile / touch controls ============ -->
     <div id="controls">
         <div id="dpad-left" class="control-side">
-            <button class="dpad-btn" id="btn-left" aria-label="Move left">◀</button>
-            <button class="dpad-btn" id="btn-right" aria-label="Move right">▶</button>
+            <button class="dpad-btn" id="btn-left" aria-label="Move left">
+                <svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><path style="stroke-width:3" d="M14 7l-5 5 5 5"/></svg>
+            </button>
+            <button class="dpad-btn" id="btn-right" aria-label="Move right">
+                <svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><path style="stroke-width:3" d="M10 7l5 5-5 5"/></svg>
+            </button>
         </div>
         <div id="dpad-right" class="control-side">
-            <button class="dpad-btn jump-btn" id="btn-jump" aria-label="Jump">▲</button>
+            <button class="dpad-btn jump-btn" id="btn-jump" aria-label="Jump">
+                <svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><path style="stroke-width:3" d="M7 14l5-5 5 5"/></svg>
+            </button>
         </div>
     </div>
 
@@ -98,20 +112,25 @@
     <!-- ============ Start screen ============ -->
     <div id="start-screen" class="overlay visible">
         <div class="panel">
-            <h1 class="game-title">Green Hills</h1>
+            <div class="game-title">
+                <svg class="mark icon icon-stroke" viewBox="0 0 32 20" aria-hidden="true" width="26" height="26">
+                    <path d="M2 18 Q8 6 14 18 M18 18 Q24 4 30 18"/>
+                </svg>
+                <h1>Green Hills</h1>
+            </div>
             <p class="tagline">A polished HTML5 platformer</p>
             <div class="controls-help">
                 <div class="help-row"><kbd>◀</kbd><kbd>▶</kbd> Move</div>
                 <div class="help-row"><kbd>▲</kbd> / <kbd>Space</kbd> Jump (hold for higher)</div>
                 <div class="help-row"><kbd>Esc</kbd> Pause &nbsp; <kbd>M</kbd> Mute &nbsp; <kbd>F</kbd> Fullscreen</div>
-                <div class="help-row">🎮 Gamepad supported</div>
-                <div class="help-row">Touch controls on mobile 📱</div>
+                <div class="help-row">Gamepad supported</div>
+                <div class="help-row">Touch controls on mobile</div>
             </div>
             <div class="panel-actions">
-                <button id="play-btn" class="btn btn-primary">▶&nbsp; Play</button>
-                <button id="start-settings-btn" class="btn">⚙&nbsp; Settings</button>
+                <button id="play-btn" class="btn btn-primary"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg> Play</button>
+                <button id="start-settings-btn" class="btn"><svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg> Settings</button>
             </div>
-            <p class="hint">Collect coins, hearts and stars. Stomp enemies, ride springs, survive the spikes, and reach the flag!</p>
+            <p class="hint">Collect coins, hearts and stars. Stomp enemies, ride springs, survive the spikes, and reach the flag.</p>
         </div>
     </div>
 
@@ -157,7 +176,7 @@
                 </label>
             </div>
             <div class="panel-actions">
-                <button id="settings-save" class="btn btn-primary">✔&nbsp; Done</button>
+                <button id="settings-save" class="btn btn-primary"><svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg> Done</button>
                 <button id="settings-reset" class="btn">Reset</button>
             </div>
             <p class="hint">Settings are saved automatically on this device.</p>
@@ -169,10 +188,10 @@
         <div class="panel">
             <h2>Paused</h2>
             <div class="panel-actions">
-                <button id="resume-btn" class="btn btn-primary">▶ Resume</button>
-                <button id="pause-restart-btn" class="btn">↻ Restart</button>
-                <button id="pause-settings-btn" class="btn">⚙ Settings</button>
-                <button id="pause-menu-btn" class="btn">🏠 Menu</button>
+                <button id="resume-btn" class="btn btn-primary"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg> Resume</button>
+                <button id="pause-restart-btn" class="btn"><svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M23 4v3h-3M23 4c0 5-5 9-9 9M3 4v3h3M3 4c0 5 5 9 9 9"/></svg> Restart</button>
+                <button id="pause-settings-btn" class="btn"><svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg> Settings</button>
+                <button id="pause-menu-btn" class="btn"><svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/></svg> Menu</button>
             </div>
         </div>
     </div>
@@ -180,18 +199,19 @@
     <!-- ============ Win screen ============ -->
     <div id="win-screen" class="overlay hidden">
         <div class="panel">
-            <h2 class="win-title">🎉 Level Complete!</h2>
+            <h2 class="win-title">Level Complete!</h2>
+            <p id="win-newbest" class="new-best" style="display:none">New best score!</p>
             <div class="stats-grid">
                 <div class="stat"><span class="stat-label">Score</span><span id="win-score" class="stat-value">0</span></div>
                 <div class="stat"><span class="stat-label">Coins</span><span id="win-coins" class="stat-value">0 / 0</span></div>
                 <div class="stat"><span class="stat-label">Stars</span><span id="win-stars" class="stat-value">0 / 0</span></div>
                 <div class="stat"><span class="stat-label">Time</span><span id="win-time" class="stat-value">0:00</span></div>
-                <div class="stat"><span class="stat-label">Best Time</span><span id="win-par" class="stat-value">—</span></div>
+                <div class="stat"><span class="stat-label">Par Time</span><span id="win-par" class="stat-value">—</span></div>
                 <div class="stat"><span class="stat-label">Best</span><span id="win-best" class="stat-value">0</span></div>
             </div>
             <div class="panel-actions">
-                <button id="win-play-btn" class="btn btn-primary">↻ Play Again</button>
-                <button id="win-menu-btn" class="btn">🏠 Menu</button>
+                <button id="win-play-btn" class="btn btn-primary"><svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M23 4v3h-3M23 4c0 5-5 9-9 9M3 4v3h3M3 4c0 5-5 9-9 9"/></svg> Play Again</button>
+                <button id="win-menu-btn" class="btn"><svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/></svg> Menu</button>
             </div>
         </div>
     </div>
@@ -199,7 +219,7 @@
     <!-- ============ Game over screen ============ -->
     <div id="gameover-screen" class="overlay hidden">
         <div class="panel">
-            <h2 class="gameover-title">💀 Game Over</h2>
+            <h2 class="gameover-title">Game Over</h2>
             <div class="stats-grid">
                 <div class="stat"><span class="stat-label">Score</span><span id="final-score" class="stat-value">0</span></div>
                 <div class="stat"><span class="stat-label">Coins</span><span id="final-coins" class="stat-value">0 / 0</span></div>
@@ -207,8 +227,8 @@
                 <div class="stat"><span class="stat-label">Time</span><span id="final-time" class="stat-value">0:00</span></div>
             </div>
             <div class="panel-actions">
-                <button id="again-btn" class="btn btn-primary">↻ Try Again</button>
-                <button id="go-menu-btn" class="btn">🏠 Menu</button>
+                <button id="again-btn" class="btn btn-primary"><svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M23 4v3h-3M23 4c0 5-5 9-9 9M3 4v3h3M3 4c0 5-5 9-9 9"/></svg> Try Again</button>
+                <button id="go-menu-btn" class="btn"><svg class="icon icon-stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/></svg> Menu</button>
             </div>
         </div>
     </div>
@@ -217,6 +237,11 @@
     <script type="text/javascript">
         (function () {
             'use strict';
+
+            var muteIconOn =
+                '<svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M3 9v6h5l5 6V3L8 9z"/><circle cx="14" cy="12" r="1"/><path style="fill:none;stroke:currentColor;stroke-width:2" d="M16.5 12a4.5 4.5 0 0 1 0 9"/></svg>';
+            var muteIconOff =
+                '<svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M3 9v6h5l5 6V3L8 9z"/><circle cx="14" cy="12" r="1"/><path style="fill:none;stroke:currentColor;stroke-width:2" d="M16.5 12a4.5 4.5 0 0 1 0 9"/><path style="fill:none;stroke:currentColor;stroke-width:2" d="M5 5l14 14"/></svg>';
 
             var canvas = document.getElementById('canvas');
             var game = new Engine(canvas);
@@ -246,6 +271,13 @@
             var reducedMotion = document.getElementById('reduced-motion');
             var showControls = document.getElementById('show-controls');
             var colorBlind = document.getElementById('color-blind');
+            var muteBtn = document.getElementById('mute-btn');
+
+            function setMuteIcon() {
+                var on = settings.sfx || settings.music;
+                muteBtn.innerHTML = on ? muteIconOn : muteIconOff;
+                muteBtn.title = on ? 'Sound: on' : 'Sound: off';
+            }
 
             function refreshSettingsUI() {
                 settings = game.getSettings();
@@ -262,14 +294,9 @@
                 reducedMotion.checked = settings.reducedMotion;
                 showControls.checked = settings.showControls;
                 colorBlind.checked = settings.colorBlind;
+                document.body.classList.toggle('cb-mode', settings.colorBlind);
                 document.getElementById('controls').style.display = settings.showControls ? 'flex' : 'none';
-                if ((!settings.sfx && !settings.music)) {
-                    document.getElementById('mute-btn').textContent = '🔇';
-                    document.getElementById('mute-btn').title = 'Sound: off';
-                } else {
-                    document.getElementById('mute-btn').textContent = '🔊';
-                    document.getElementById('mute-btn').title = 'Sound: on';
-                }
+                setMuteIcon();
             }
 
             function persistSettings() {

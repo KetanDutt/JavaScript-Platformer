@@ -32,18 +32,22 @@ generated in code, so it runs anywhere a browser runs.
 - **Juice & polish**:
   - Squash & stretch on jump/land + blinking eyes + mouth that adapts to
     speed + motion trail in the air
+  - **Coyote-time indicator**: pulsing ring under the player while a late
+    jump is still possible after leaving a ledge
   - Particle effects (jump, landing, run dust, coin/heart/star, stomp, spring,
     death, water splash, win confetti)
   - **Expanding ring VFX** on pickups, checkpoints, and the goal
   - World-space score popups and animated pickups
   - Player-centered camera with smooth look-ahead + screen shake + screen
     flash on start / checkpoint / death
+  - Screen shake on stomp; gamepad rumble on jump, stomp and death
   - Parallax sky, drifting clouds, hills and bushes
   - Animated coins, stars, hearts, flags, enemies and moving platforms
   - Tween-based HUD score count-up and animated water ripples
   - **Level intro card** that slides in on game start
   - **Vignette** for a subtle cinematic frame
   - **Combo HUD chip** that lights up when chaining pickups
+  - **NEW BEST!** badge on the win screen when you beat your best score
 - **Audio** — synthesized Web Audio SFX (jump, coin, heart, star, stomp,
   spring, hit, splash, death, win, checkpoint, UI, combo, whoosh) plus a
   looping chiptune soundtrack with melody, bass, and percussion, and
@@ -69,6 +73,17 @@ generated in code, so it runs anywhere a browser runs.
 - **PWA-ready** — manifest, theme color, app icons and an offline service
   worker with network-first caching so the game installs to a home screen and
   works without a connection.
+
+## 🎨 Design
+
+Green Hills follows a quiet, restrained interface style: the canvas and the
+gameplay are the focus, and the chrome (HUD, menus, controls) stays out of the
+way. The UI uses a single brand color (green), flat layered surfaces with
+subtle borders, inline SVG icons instead of emoji, a deliberate spacing and
+typographic scale, and purposeful motion only — with full support for
+`prefers-reduced-motion` and `prefers-contrast: more`. Visual richness is
+concentrated in meaningful moments (a nice jump arc, a clean spring bounce, a
+tight stomp) rather than spread across every button and panel.
 
 ## 🚀 Getting started
 
